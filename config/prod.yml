@@ -1,0 +1,7 @@
+database:
+  name: tracking
+  user:
+  password:
+  address:
+  port: 5432
+  schema: schema.sql

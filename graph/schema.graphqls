@@ -1,0 +1,72 @@
+scalar Time
+
+interface Additional {
+    id: Int!
+    bundleId: Int!
+    type: String
+    place: Int
+    date: Time
+}
+
+type Categories implements Additional{
+    id: Int!
+    bundleId: Int!
+    type: String
+    place: Int
+    date: Time
+}
+
+type Keywords implements Additional{
+    id: Int!
+    bundleId: Int!
+    type: String
+    place: Int
+    date: Time
+}
+
+type DeveloperContacts {
+    email: String
+    contacts: String
+}
+
+type Meta{
+    id: Int!
+    bundleId: Int!
+    title: String!
+    price: String
+    picture: String!
+    screenshots: [String]
+    rating: String
+    reviewCount: String
+    ratingHistogram: [String]
+    description: String!
+    shortDescription: String
+    recentChanges: String
+    releaseDate: String
+    lastUpdateDate: String
+    appsize: String
+    installs: String
+    version: String
+    osVersion: String
+    contentRating: String
+    devContacts: DeveloperContacts
+    privacyPolicy: String
+    date: Time
+}
+
+type App{
+    id: Int!
+    bundle: String!
+    category: String!
+    developerId: String!
+    developer: String!
+    geo: String!
+    startAt: Time
+    period: Int!
+}
+
+type Query {
+    meta: [Meta]!
+    cats: [Additional]!
+    keys: [Additional]!
+}
