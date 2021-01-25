@@ -13,8 +13,8 @@ import (
 func (r *queryResolver) Meta(ctx context.Context) ([]*model.Meta, error) {
 	return []*model.Meta {
 		{
-			Title: "1111",
-			Description: "123",
+			Title: "agadaok",
+			Description: "PrivetSMarsa",
 		},
 	}, nil
 }
