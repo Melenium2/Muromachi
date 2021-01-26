@@ -1,8 +1,10 @@
 package main
 
 import (
+	"Muromachi/config"
 	"Muromachi/graph"
 	"Muromachi/graph/generated"
+	"Muromachi/store"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"log"
@@ -17,8 +19,6 @@ import (
 // Показывать или нет ендпоинты https://gqlgen.com/reference/introspection/
 // Поставить ограничение по сложности запросов https://gqlgen.com/reference/complexity/
 
-// База данных
-// Генерация бд при условии что ее нет
 // Создать индексы в бд
 // Дописать тесты с реальной базой для APP_REPO
 
@@ -30,7 +30,16 @@ func main() {
 		port = defaultPort
 	}
 
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
+	cfg := config.New("./config/dev.yml")
+	cfg.Database.Schema = "./config/schema.sql"
+	conn, err := store.EstablishConnection(cfg.Database)
+	if err != nil {
+		log.Fatal(err)
+	}
+	resolver := &graph.Resolver{
+		Tables: store.New(conn),
+	}
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: resolver}))
 
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)

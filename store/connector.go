@@ -69,3 +69,23 @@ func InitSchema(connection *pgx.Conn, schemafile string) error {
 
 	return nil
 }
+
+func EstablishConnection(config config.DBConfig) (*pgx.Conn, error) {
+	url, err := ConnectionUrl(config)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := Connect(url)
+	if err != nil {
+		return nil, err
+	}
+
+	err = InitSchema(conn, config.Schema)
+	if err != nil {
+		_ = conn.Close(context.Background())
+		return nil, err
+	}
+
+	return conn, nil
+}

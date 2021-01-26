@@ -10,17 +10,17 @@ import (
 	"fmt"
 )
 
-func (r *queryResolver) Meta(ctx context.Context) ([]*model.Meta, error) {
-	return []*model.Meta {
-		{
-			Title: "agadaok",
-			Description: "PrivetSMarsa",
-		},
-	}, nil
+func (r *queryResolver) Meta(ctx context.Context, id int) ([]*model.Meta, error) {
+	_, err := r.Tables.Meta.ByBundleId(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
 }
 
 func (r *queryResolver) Cats(ctx context.Context) ([]model.Additional, error) {
-	return []model.Additional {
+	return []model.Additional{
 		model.Categories{
 			BundleID: 1,
 		},

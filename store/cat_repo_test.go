@@ -120,7 +120,7 @@ func TestCatRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 	assert.Equal(t, 2, len(dboSlice))
 
 	var key store.Track
-	id := 1000
+	id := 1000000
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&key))
 		assert.Equal(t, "key", key.Type)

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"Muromachi/graph/model"
 	"fmt"
 	"github.com/jackc/pgtype"
 	"time"
@@ -22,11 +23,21 @@ type App struct {
 }
 
 func (a App) To(to interface{}) error {
-	v, ok := to.(*App)
-	if !ok {
+	switch v :=  to.(type) {
+	case *App:
+		*v = a
+	case *model.App:
+		v.ID = a.Id
+		v.Bundle = a.Bundle
+		v.Category = a.Category
+		v.DeveloperID = a.DeveloperId
+		v.Developer = a.Developer
+		v.Geo = a.Geo
+		v.StartAt = a.StartAt
+		v.Period = int(a.Period)
+	default:
 		return fmt.Errorf("%s", "param 'to' not the same type with *App")
 	}
-	*v = a
 
 	return nil
 }
@@ -57,11 +68,38 @@ type Meta struct {
 }
 
 func (m Meta) To(to interface{}) error {
-	v, ok := to.(*Meta)
-	if !ok {
+	switch v := to.(type) {
+	case *Meta:
+		*v = m
+	case *model.Meta:
+		v.ID = m.Id
+		v.BundleID = m.BundleId
+		v.Title = m.Title
+		v.Price = m.Price
+		v.Picture = m.Picture
+		v.Screenshots = m.Screenshots
+		v.Rating = m.Rating
+		v.ReviewCount = m.ReviewCount
+		v.RatingHistogram = m.RatingHistogram
+		v.Description = m.Description
+		v.ShortDescription = m.ShortDescription
+		v.RecentChanges = m.RecentChanges
+		v.ReleaseDate = m.ReleaseDate
+		v.LastUpdateDate = m.LastUpdateDate
+		v.Appsize = m.AppSize
+		v.Installs = m.Installs
+		v.Version = m.Version
+		v.OsVersion = m.AndroidVersion
+		v.ContentRating = m.ContentRating
+		v.DevContacts = &model.DeveloperContacts{
+			Email:    m.DeveloperContacts.Email,
+			Contacts: m.DeveloperContacts.Email,
+		}
+		v.PrivacyPolicy = m.PrivacyPolicy
+		v.Date = m.Date
+	default:
 		return fmt.Errorf("%s", "param 'to' not the same type with *Meta")
 	}
-	*v = m
 
 	return nil
 }
@@ -75,11 +113,24 @@ type Track struct {
 }
 
 func (tr Track) To(to interface{}) error {
-	v, ok := to.(*Track)
-	if !ok {
+	switch v := to.(type) {
+	case *Track:
+		*v = tr
+	case *model.Categories:
+		v.ID = tr.Id
+		v.BundleID = tr.BundleId
+		v.Type = tr.Type
+		v.Date = tr.Date
+		v.Place = int(tr.Place)
+	case *model.Keywords:
+		v.ID = tr.Id
+		v.BundleID = tr.BundleId
+		v.Type = tr.Type
+		v.Date = tr.Date
+		v.Place = int(tr.Place)
+	default:
 		return fmt.Errorf("%s", "param 'to' not the same type with *Track")
 	}
-	*v = tr
 
 	return nil
 }
