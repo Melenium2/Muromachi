@@ -96,6 +96,24 @@ func AddNewMeta(conn *pgx.Conn, ctx context.Context, meta store.Meta) (int, erro
 	return id, nil
 }
 
+// Add new track to keyword or category table in test database
+func AddNewTrack(conn *pgx.Conn, ctx context.Context, track store.Track) (int, error) {
+	row := conn.QueryRow(
+		ctx,
+		fmt.Sprint("insert into keyword_tracking (bundleId, type, place, date) values ($1, $2, $3, $4) returning id"),
+		track.BundleId,
+		track.Type,
+		track.Place,
+		track.Date,
+	)
+	var id int
+	if err := row.Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
 // Return new meta struct for tests
 func MetaStruct(bundleId int) store.Meta {
 	t1, _ := time.Parse("2006-01-02", "2021-01-18")
@@ -124,6 +142,17 @@ func MetaStruct(bundleId int) store.Meta {
 		},
 		PrivacyPolicy: "http://privacypolicy.com",
 		Date:          t1.AddDate(0, 0, 2),
+	}
+}
+
+// Return new track struct for tests
+func TrackStruct(bundleId int, t string) store.Track {
+	t1, _ := time.Parse("2006-01-02", "2021-01-18")
+	return store.Track{
+		BundleId: bundleId,
+		Type:     t,
+		Date:     t1,
+		Place:    19,
 	}
 }
 
@@ -422,3 +451,98 @@ func (mr mockMetaRow) Scan(dest ...interface{}) error {
 
 	return nil
 }
+
+// Mock connection with errors (Keyword and Category tables)
+type mockTrackConnectionErrors struct {
+}
+
+func (m mockTrackConnectionErrors) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	return mockMetaErrorRow{}
+}
+
+func (m mockTrackConnectionErrors) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
+	return nil, pgx.ErrNoRows
+}
+
+type mockTrackErrorRow struct {
+}
+
+func (mr mockTrackErrorRow) FieldDescriptions() []pgproto3.FieldDescription {
+	return nil
+}
+
+func (mr mockTrackErrorRow) RawValues() [][]byte {
+	return nil
+}
+
+func (mr mockTrackErrorRow) Scan(dest ...interface{}) error {
+	return pgx.ErrNoRows
+}
+
+// Mock connection with successful returned objects (Keyword or Category tables)
+type mockTrackConnection struct {
+}
+
+func (m mockTrackConnection) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	t, _ := time.Parse("2006-01-02", "2021-01-19")
+	return mockTrackRow{
+		Id:       78,
+		BundleId: 12,
+		Type:     "type",
+		Date:     t,
+		Place:    18,
+	}
+}
+
+func (m mockTrackConnection) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
+	t, _ := time.Parse("2006-01-02", "2021-01-19")
+	for i := 0; i < 4; i++ {
+		_ = mockTrackRow{
+			Id:       78,
+			BundleId: 12,
+			Type:     "type",
+			Date:     t,
+			Place:    18,
+		}.Scan(scans...)
+		t = t.AddDate(0, 0, 1)
+		_ = f(mockTrackRow{})
+	}
+
+	return nil, nil
+}
+
+type mockTrackRow struct {
+	Id       int       `json:"-"`
+	BundleId int       `json:"bundle,omitempty"`
+	Type     string    `json:"type,omitempty"`
+	Date     time.Time `json:"date,omitempty"`
+	Place    int32     `json:"place,omitempty"`
+}
+
+func (mr mockTrackRow) FieldDescriptions() []pgproto3.FieldDescription {
+	return nil
+}
+
+func (mr mockTrackRow) RawValues() [][]byte {
+	return nil
+}
+
+func (mr mockTrackRow) Scan(dest ...interface{}) error {
+	Id := dest[0].(*int)
+	BundleId := dest[1].(*int)
+	Type := dest[2].(*string)
+	Place := dest[3].(*int32)
+	Date := dest[4].(*time.Time)
+
+	*Id = mr.Id
+	*BundleId = mr.BundleId
+	*Type = mr.Type
+	*Date = mr.Date
+	*Place = mr.Place
+
+	return nil
+}
+
+
+
+
