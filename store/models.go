@@ -24,7 +24,7 @@ type App struct {
 func (a App) To(to interface{}) error {
 	v, ok := to.(*App)
 	if !ok {
-		return fmt.Errorf("%s", "*App is not given type")
+		return fmt.Errorf("%s", "param 'to' not the same type with *App")
 	}
 	*v = a
 
@@ -59,7 +59,7 @@ type Meta struct {
 func (m Meta) To(to interface{}) error {
 	v, ok := to.(*Meta)
 	if !ok {
-		return fmt.Errorf("%s", "*App is not given type")
+		return fmt.Errorf("%s", "param 'to' not the same type with *Meta")
 	}
 	*v = m
 
@@ -77,7 +77,7 @@ type Track struct {
 func (tr Track) To(to interface{}) error {
 	v, ok := to.(*Track)
 	if !ok {
-		return fmt.Errorf("%s", "*App is not given type")
+		return fmt.Errorf("%s", "param 'to' not the same type with *Track")
 	}
 	*v = tr
 
