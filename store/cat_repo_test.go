@@ -8,9 +8,9 @@ import (
 	"time"
 )
 
-func TestKeysRepo_ByBundleId_ShouldReturnApp_Mock(t *testing.T) {
+func TestCatRepo_ByBundleId_ShouldReturnApp_Mock(t *testing.T) {
 	conn := mockTrackConnection{}
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 123)
@@ -22,16 +22,16 @@ func TestKeysRepo_ByBundleId_ShouldReturnApp_Mock(t *testing.T) {
 	assert.Equal(t, "type", key.Type)
 }
 
-func TestKeysRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
+func TestCatRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
 	conn, cleaner := RealDb()
-	defer cleaner("app_tracking", "keyword_tracking")
-	repo := store.NewKeys(conn)
+	defer cleaner("app_tracking", "category_tracking")
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	bundleId, _ := AddNewApp(conn, ctx, store.App{Bundle: "123"})
 	track := TrackStruct(bundleId, "key")
 	for i := 0; i < 4; i++ {
-		_, _ = AddNewTrack(conn, ctx, track, "keyword_tracking")
+		_, _ = AddNewTrack(conn, ctx, track, "category_tracking")
 	}
 
 	dboSlice, err := repo.ByBundleId(ctx, bundleId)
@@ -44,9 +44,9 @@ func TestKeysRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
 	assert.Equal(t, "key", key.Type)
 }
 
-func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
+func TestCatRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
 	conn := mockTrackConnection{}
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	t1, _ := time.Parse("2006-01-02", "2021-01-18")
@@ -63,17 +63,17 @@ func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
 	}
 }
 
-func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange(t *testing.T) {
+func TestCatRepo_TimeRange_ShouldReturnAppsInTimeRange(t *testing.T) {
 	conn, cleaner := RealDb()
-	defer cleaner("app_tracking", "keyword_tracking")
-	repo := store.NewKeys(conn)
+	defer cleaner("app_tracking", "category_tracking")
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	bundleId, _ := AddNewApp(conn, ctx, store.App{Bundle: "123"})
 	track := TrackStruct(bundleId, "key")
 	t1 := track.Date.AddDate(0, 0, -1)
 	for i := 0; i < 4; i++ {
-		_, _ = AddNewTrack(conn, ctx, track, "keyword_tracking")
+		_, _ = AddNewTrack(conn, ctx, track, "category_tracking")
 		track.Date = track.Date.AddDate(0, 0, 1)
 	}
 	t2 := track.Date.AddDate(0, 0, 1)
@@ -91,9 +91,9 @@ func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange(t *testing.T) {
 	}
 }
 
-func TestKeysRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
+func TestCatRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 	conn := mockTrackConnection{}
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 123, 4)
@@ -102,16 +102,16 @@ func TestKeysRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 	assert.Equal(t, 4, len(dboSlice))
 }
 
-func TestKeysRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
+func TestCatRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 	conn, cleaner := RealDb()
-	defer cleaner("app_tracking", "keyword_tracking")
-	repo := store.NewKeys(conn)
+	defer cleaner("app_tracking", "category_tracking")
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	bundleId, _ := AddNewApp(conn, ctx, store.App{Bundle: "123"})
 	track := TrackStruct(bundleId, "key")
 	for i := 0; i < 4; i++ {
-		_, _ = AddNewTrack(conn, ctx, track, "keyword_tracking")
+		_, _ = AddNewTrack(conn, ctx, track, "category_tracking")
 	}
 
 	dboSlice, err := repo.LastUpdates(ctx, bundleId, 2)
@@ -129,18 +129,18 @@ func TestKeysRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 	}
 }
 
-func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
+func TestCatRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockTrackConnectionErrors{}
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	_, err := repo.ByBundleId(ctx, 123)
 	assert.Error(t, err)
 }
 
-func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
+func TestCatRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
 	conn, _ := RealDb()
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 1)
@@ -148,18 +148,18 @@ func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
 	assert.Nil(t, dboSlice)
 }
 
-func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
+func TestCatRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockTrackConnectionErrors{}
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	_, err := repo.TimeRange(ctx, 123, time.Now(), time.Now())
 	assert.Error(t, err)
 }
 
-func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRow(t *testing.T) {
+func TestCatRepo_TimeRange_ShouldReturnErrorIfNoRow(t *testing.T) {
 	conn, _ := RealDb()
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.TimeRange(ctx, 1, time.Now(), time.Now())
@@ -167,9 +167,9 @@ func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRow(t *testing.T) {
 	assert.Nil(t, dboSlice)
 }
 
-func TestKeysRepo_LastUpdates_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
+func TestCatRepo_LastUpdates_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockTrackConnectionErrors{}
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	_, err := repo.LastUpdates(ctx, 123, 1)
@@ -177,14 +177,15 @@ func TestKeysRepo_LastUpdates_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 
-func TestKeysRepo_LastUpdates_ShouldReturnErrorIfNoRow(t *testing.T) {
+func TestCatRepo_LastUpdates_ShouldReturnErrorIfNoRow(t *testing.T) {
 	conn, _ := RealDb()
-	repo := store.NewKeys(conn)
+	repo := store.NewCat(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 1, 2)
 	assert.Error(t, err)
 	assert.Nil(t, dboSlice)
 }
+
 
 

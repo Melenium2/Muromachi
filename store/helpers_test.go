@@ -97,10 +97,10 @@ func AddNewMeta(conn *pgx.Conn, ctx context.Context, meta store.Meta) (int, erro
 }
 
 // Add new track to keyword or category table in test database
-func AddNewTrack(conn *pgx.Conn, ctx context.Context, track store.Track) (int, error) {
+func AddNewTrack(conn *pgx.Conn, ctx context.Context, track store.Track, table string) (int, error) {
 	row := conn.QueryRow(
 		ctx,
-		fmt.Sprint("insert into keyword_tracking (bundleId, type, place, date) values ($1, $2, $3, $4) returning id"),
+		fmt.Sprintf("insert into %s (bundleId, type, place, date) values ($1, $2, $3, $4) returning id", table),
 		track.BundleId,
 		track.Type,
 		track.Place,
