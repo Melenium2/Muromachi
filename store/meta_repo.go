@@ -10,7 +10,7 @@ type MetaRepo struct {
 	conn Conn
 }
 
-func (m *MetaRepo) ProduceFunc(ctx context.Context, sql string, params ...interface{}) ([]DBO, error) {
+func (m *MetaRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) ([]DBO, error) {
 	var app Meta
 	var apps []DBO
 
@@ -41,7 +41,7 @@ func (m *MetaRepo) ProduceFunc(ctx context.Context, sql string, params ...interf
 }
 
 func (m *MetaRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
-	return m.ProduceFunc(
+	return m.ProducerFunc(
 		ctx,
 		"select * from meta_tracking where bundleid = $1",
 		bundleId,
@@ -49,7 +49,7 @@ func (m *MetaRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) 
 }
 
 func (m *MetaRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error) {
-	return m.ProduceFunc(
+	return m.ProducerFunc(
 		ctx,
 		"select * from meta_tracking where bundleid = $1 and date >= $2 and date <= $3",
 		bundleId, start, end,
@@ -57,7 +57,7 @@ func (m *MetaRepo) TimeRange(ctx context.Context, bundleId int, start, end time.
 }
 
 func (m *MetaRepo) LastUpdates(ctx context.Context, bundleId, count int) ([]DBO, error) {
-	return m.ProduceFunc(
+	return m.ProducerFunc(
 		ctx,
 		"select * from meta_tracking where bundleid = $1 order by id desc limit $2",
 		bundleId, count,
