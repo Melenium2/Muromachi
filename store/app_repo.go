@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
@@ -36,12 +37,21 @@ func (a *AppRepo) ById(ctx context.Context, id int) (DBO, error) {
 }
 
 func (a *AppRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
+	dbo, err := a.ById(ctx, bundleId)
+	if err != nil {
+		return nil, err
+	}
+
+	return []DBO { dbo }, nil
+}
+
+func (a *AppRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error) {
 	var app App
 	var apps []DBO
 	_, err := a.conn.QueryFunc(
 		ctx,
-		"select * from app_tracking where bundleid = $1",
-		[]interface{}{bundleId},
+		"select * from app_tracking where bundleid = $1 and startat >= $2 and startat <= $3",
+		[]interface{}{bundleId, start, end},
 		[]interface{}{
 			&app.Id, &app.Bundle, &app.Category, &app.DeveloperId,
 			&app.Developer, &app.Geo, &app.StartAt, &app.Period,
@@ -59,12 +69,8 @@ func (a *AppRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
 	return apps, nil
 }
 
-func (a *AppRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error) {
-	panic("implement me")
-}
-
 func (a *AppRepo) LastUpdates(ctx context.Context, bundleId, count int) ([]DBO, error) {
-	panic("implement me")
+	return nil, fmt.Errorf("%s", "no last updates in this table")
 }
 
 func NewApp(conn Conn) *AppRepo {

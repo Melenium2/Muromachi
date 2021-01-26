@@ -13,8 +13,11 @@ import (
 	"time"
 )
 
+// Create instance of real database from local config
+//
+// Also return cleaner func for truncate data from tables
 func RealDb() (*pgx.Conn, func(names ...string)) {
-	c := config.New("../../../config/dev.yml")
+	c := config.New("../config/dev.yml")
 	url, err := store.ConnectionUrl(c.Database)
 	if err != nil {
 		panic(err)
@@ -25,7 +28,7 @@ func RealDb() (*pgx.Conn, func(names ...string)) {
 		panic(err)
 	}
 
-	if err := store.InitSchema(conn, "../../../config/schema.sql"); err != nil {
+	if err := store.InitSchema(conn, "../config/schema.sql"); err != nil {
 		panic(err)
 	}
 
@@ -35,6 +38,20 @@ func RealDb() (*pgx.Conn, func(names ...string)) {
 			log.Print(err)
 		}
 	}
+}
+
+func AddNewApp(conn *pgx.Conn, ctx context.Context, app store.App) (int, error) {
+	row := conn.QueryRow(
+		ctx,
+		fmt.Sprint("insert into app_tracking (bundle, category, developerId, developer, geo, startAt, period)  values ($1, $2, $3, $4, $5, $6, $7) returning id"),
+		app.Bundle, app.Category, app.DeveloperId, app.Developer, app.Geo, app.StartAt, app.Period,
+	)
+	var id int
+	if err := row.Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
 
 // Mock connection with errors
@@ -85,6 +102,7 @@ func (m mockAppConnection) QueryRow(ctx context.Context, sql string, args ...int
 func (m mockAppConnection) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
 	t, _ := time.Parse("2006-01-01", "2020-01-01")
 	for i := 0; i < 2; i++ {
+		t = t.Add(time.Hour * 25)
 		err := mockRow{
 			Id:          i+1,
 			Bundle:      "com.test",
