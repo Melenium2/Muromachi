@@ -9,46 +9,6 @@ import (
 	"time"
 )
 
-func TestAppRepo_ById_ShouldReturnApp_Mock(t *testing.T) {
-	conn := mockAppConnection{}
-	repo := store.NewApp(conn)
-	ctx := context.Background()
-
-	dbo, err := repo.ById(ctx, 10)
-	assert.NoError(t, err)
-	assert.NotNil(t, dbo)
-	var app store.App
-	assert.NoError(t, dbo.To(&app))
-	assert.Equal(t, "FINANCE", app.Category)
-}
-
-func TestAppRepo_ById_ShouldReturnApp(t *testing.T) {
-	conn, cleaner := RealDb()
-	defer cleaner("app_tracking")
-	repo := store.NewApp(conn)
-	ctx := context.Background()
-
-	app := store.App{
-		Bundle:      "com.test.hello",
-		Category:    "FINANCE",
-		DeveloperId: "imdevid",
-		Developer:   "invalid",
-		Geo:         "ru_ru",
-		StartAt:     time.Now(),
-		Period:      31,
-	}
-	id, err := AddNewApp(conn, ctx, app)
-	assert.NoError(t, err)
-
-	dbo, err := repo.ById(ctx, id)
-	assert.NoError(t, err)
-	assert.NotNil(t, dbo)
-
-	var appFromDb store.App
-	assert.NoError(t, dbo.To(&appFromDb))
-	assert.Equal(t, id, appFromDb.Id)
-}
-
 func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps_Mock(t *testing.T) {
 	conn := mockAppConnection{}
 	repo := store.NewApp(conn)
@@ -125,27 +85,6 @@ func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseThisTableHasNotInfo_Mock(t 
 	assert.Error(t, err)
 }
 
-func TestAppRepo_ById_ShouldReturnErrNoRows_Mock(t *testing.T) {
-	conn := mockAppConnectionErrors{}
-	repo := store.NewApp(conn)
-	ctx := context.Background()
-
-	_, err := repo.ById(ctx, 10)
-	assert.Error(t, err)
-	assert.Equal(t, pgx.ErrNoRows, err)
-}
-
-func TestAppRepo_ById_ShouldReturnErrorNoRow(t *testing.T) {
-	conn, cleaner := RealDb()
-	defer cleaner("app_tracking")
-	repo := store.NewApp(conn)
-	ctx := context.Background()
-
-	dbo, err := repo.ById(ctx, 10)
-	assert.Error(t, err)
-	assert.Nil(t, dbo)
-}
-
 func TestAppRepo_ByBundleId_ShouldReturnErrNoRows_Mock(t *testing.T) {
 	conn := mockAppConnectionErrors{}
 	repo := store.NewApp(conn)
@@ -165,5 +104,3 @@ func TestAppRepo_ByBundleIdShouldReturnErrNoRows_Mock(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, pgx.ErrNoRows, err)
 }
-
-

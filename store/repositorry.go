@@ -8,7 +8,6 @@ import (
 )
 
 type TrackingRepo interface {
-	ById(ctx context.Context, id int) (DBO, error)
 	ByBundleId(ctx context.Context, bundleId int) ([]DBO, error)
 	TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error)
 	LastUpdates(ctx context.Context, bundleId, count int) ([]DBO, error)

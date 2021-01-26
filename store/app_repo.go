@@ -11,12 +11,12 @@ type AppRepo struct {
 	conn Conn
 }
 
-func (a *AppRepo) ById(ctx context.Context, id int) (DBO, error) {
+func (a *AppRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
 	var app App
 	err := a.conn.QueryRow(
 		ctx,
 		"select * from app_tracking where id = $1",
-		id,
+		bundleId,
 	).
 		Scan(
 			&app.Id,
@@ -33,16 +33,7 @@ func (a *AppRepo) ById(ctx context.Context, id int) (DBO, error) {
 		return nil, err
 	}
 
-	return app, nil
-}
-
-func (a *AppRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
-	dbo, err := a.ById(ctx, bundleId)
-	if err != nil {
-		return nil, err
-	}
-
-	return []DBO { dbo }, nil
+	return []DBO{app}, nil
 }
 
 func (a *AppRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error) {
@@ -69,7 +60,7 @@ func (a *AppRepo) TimeRange(ctx context.Context, bundleId int, start, end time.T
 	return apps, nil
 }
 
-func (a *AppRepo) LastUpdates(ctx context.Context, bundleId, count int) ([]DBO, error) {
+func (a *AppRepo) LastUpdates(_ context.Context, _, _ int) ([]DBO, error) {
 	return nil, fmt.Errorf("%s", "no last updates in this table")
 }
 
