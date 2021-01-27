@@ -10,7 +10,7 @@ type CatRepo struct {
 	conn Conn
 }
 
-func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) ([]DBO, error) {
+func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (DboSlice, error) {
 	var key Track
 	var keys []DBO
 
@@ -36,7 +36,7 @@ func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 	return keys, nil
 }
 
-func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
+func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
 		"select * from category_tracking where bundleid = $1",
@@ -44,7 +44,7 @@ func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
 	)
 }
 
-func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error) {
+func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
 		"select * from category_tracking where bundleid = $1 and date >= $2 and date <= $3",
@@ -52,7 +52,7 @@ func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.T
 	)
 }
 
-func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) ([]DBO, error) {
+func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
 		"select * from category_tracking where bundleid = $1 order by id desc limit $2",

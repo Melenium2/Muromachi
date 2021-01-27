@@ -72,8 +72,13 @@ func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval_Mock(
 	assert.True(t, nextTimestamp.After(secondApp.StartAt))
 }
 
-func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval(t *testing.T) {
-	// TODO Continue
+func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseTheFuncNotAllowedInThisTable(t *testing.T) {
+	conn, _ := RealDb()
+	repo := store.NewApp(conn)
+	ctx := context.Background()
+
+	_, err := repo.LastUpdates(ctx, 10, 10)
+	assert.Error(t, err)
 }
 
 func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseThisTableHasNotInfo_Mock(t *testing.T) {

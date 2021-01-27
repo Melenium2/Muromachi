@@ -20,7 +20,6 @@ import (
 // Поставить ограничение по сложности запросов https://gqlgen.com/reference/complexity/
 
 // Создать индексы в бд
-// Дописать тесты с реальной базой для APP_REPO
 
 const defaultPort = "8080"
 

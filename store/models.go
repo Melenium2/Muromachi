@@ -158,3 +158,58 @@ func (src DeveloperContacts) EncodeBinary(ci *pgtype.ConnInfo, buf []byte) (newB
 
 	return (pgtype.CompositeFields{&email, &contacts}).EncodeBinary(ci, buf)
 }
+
+type DboSlice []DBO
+
+func (d DboSlice) To(to interface{}) error {
+	switch v := to.(type) {
+	case []*model.App:
+		if len(v) != len(d) {
+			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
+		}
+		app := &model.App{}
+		for i, value := range d {
+			if err := value.To(app); err != nil {
+				return err
+			}
+			v[i] = app
+		}
+	case []*model.Meta:
+		if len(v) != len(d) {
+			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
+		}
+		meta := &model.Meta{}
+		for i, value := range d {
+			if err := value.To(meta); err != nil {
+				return err
+			}
+			v[i] = meta
+		}
+	case []*model.Categories:
+		if len(v) != len(d) {
+			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
+		}
+		cat := &model.Categories{}
+		for i, value := range d {
+			if err := value.To(cat); err != nil {
+				return err
+			}
+			v[i] = cat
+		}
+	case []*model.Keywords:
+		if len(v) != len(d) {
+			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
+		}
+		key := &model.Keywords{}
+		for i, value := range d {
+			if err := value.To(key); err != nil {
+				return err
+			}
+			v[i] = key
+		}
+	default:
+		return fmt.Errorf("param 'to' not the same type with next types ([]*model.App, []*model.Meta, []*model.Categories, []*model.Keywords)")
+	}
+
+	return nil
+}

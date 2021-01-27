@@ -10,7 +10,7 @@ type KeysRepo struct {
 	conn Conn
 }
 
-func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) ([]DBO, error) {
+func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (DboSlice, error) {
 	var key Track
 	var keys []DBO
 
@@ -36,7 +36,7 @@ func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...inter
 	return keys, nil
 }
 
-func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) {
+func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
 		"select * from keyword_tracking where bundleid = $1",
@@ -44,7 +44,7 @@ func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) ([]DBO, error) 
 	)
 }
 
-func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) ([]DBO, error) {
+func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
 		"select * from keyword_tracking where bundleid = $1 and date >= $2 and date <= $3",
@@ -52,7 +52,7 @@ func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.
 	)
 }
 
-func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) ([]DBO, error) {
+func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
 		"select * from keyword_tracking where bundleid = $1 order by id desc limit $2",
