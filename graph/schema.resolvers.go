@@ -12,33 +12,6 @@ import (
 	"time"
 )
 
-func (r *queryResolver) sendMeta(dbo store.DboSlice) ([]*model.Meta, error) {
-	metaModels := make([]*model.Meta, len(dbo))
-	if err := dbo.To(metaModels); err != nil {
-		return nil, err
-	}
-
-	return metaModels, nil
-}
-
-func (r *queryResolver) sendCategories(dbo store.DboSlice) ([]*model.Categories, error) {
-	metaModels := make([]*model.Categories, len(dbo))
-	if err := dbo.To(metaModels); err != nil {
-		return nil, err
-	}
-
-	return metaModels, nil
-}
-
-func (r *queryResolver) sendKeys(dbo store.DboSlice) ([]*model.Keywords, error) {
-	metaModels := make([]*model.Keywords, len(dbo))
-	if err := dbo.To(metaModels); err != nil {
-		return nil, err
-	}
-
-	return metaModels, nil
-}
-
 func (r *queryResolver) Meta(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Meta, error) {
 	var (
 		dbo store.DboSlice
@@ -61,7 +34,12 @@ func (r *queryResolver) Meta(ctx context.Context, id int, last *int, start *scal
 		}
 	}
 
-	return r.sendMeta(dbo)
+	metaModels := make([]*model.Meta, len(dbo))
+	if err := dbo.To(metaModels); err != nil {
+		return nil, err
+	}
+
+	return metaModels, nil
 }
 
 func (r *queryResolver) Cats(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Categories, error) {
@@ -86,7 +64,12 @@ func (r *queryResolver) Cats(ctx context.Context, id int, last *int, start *scal
 		}
 	}
 
-	return r.sendCategories(dbo)
+	metaModels := make([]*model.Categories, len(dbo))
+	if err := dbo.To(metaModels); err != nil {
+		return nil, err
+	}
+
+	return metaModels, nil
 }
 
 func (r *queryResolver) Keys(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Keywords, error) {
@@ -111,7 +94,12 @@ func (r *queryResolver) Keys(ctx context.Context, id int, last *int, start *scal
 		}
 	}
 
-	return r.sendKeys(dbo)
+	metaModels := make([]*model.Keywords, len(dbo))
+	if err := dbo.To(metaModels); err != nil {
+		return nil, err
+	}
+
+	return metaModels, nil
 }
 
 // Query returns generated.QueryResolver implementation.

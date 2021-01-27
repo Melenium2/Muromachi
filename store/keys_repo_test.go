@@ -20,6 +20,7 @@ func TestKeysRepo_ByBundleId_ShouldReturnApp_Mock(t *testing.T) {
 	var key store.Track
 	assert.NoError(t, dboSlice[0].To(&key))
 	assert.Equal(t, "type", key.Type)
+	assert.Equal(t, "123", key.App.Bundle)
 }
 
 func TestKeysRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
@@ -42,6 +43,7 @@ func TestKeysRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
 	var key store.Track
 	assert.NoError(t, dboSlice[0].To(&key))
 	assert.Equal(t, "key", key.Type)
+	assert.Equal(t, "123", key.App.Bundle)
 }
 
 func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
@@ -59,6 +61,7 @@ func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&key))
 		assert.Equal(t, "type", key.Type)
+		assert.Equal(t, "123", key.App.Bundle)
 		assert.True(t, key.Date.After(t1) && key.Date.Before(t2))
 	}
 }
@@ -124,6 +127,7 @@ func TestKeysRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&key))
 		assert.Equal(t, "key", key.Type)
+		assert.Equal(t, "123", key.App.Bundle)
 		assert.Greater(t, id, key.Id)
 		id = key.Id
 	}

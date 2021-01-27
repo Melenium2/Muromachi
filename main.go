@@ -12,12 +12,12 @@ import (
 	"os"
 )
 
-// Сделать кеширование https://graphql.org/learn/caching/
+// Даталоадер, агрегация постоянных одинаковых запросов
+// https://gqlgen.com/reference/dataloaders/
+//
 // Сделать авторизацию (обсудить как удобнее) 	https://graphql.org/learn/authorization/
 //												https://gqlgen.com/recipes/authentication/
-// Сделать error log https://gqlgen.com/reference/errors/
 // Показывать или нет ендпоинты https://gqlgen.com/reference/introspection/
-// Поставить ограничение по сложности запросов https://gqlgen.com/reference/complexity/
 
 const defaultPort = "8080"
 

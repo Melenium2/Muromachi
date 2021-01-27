@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgproto3/v2"
 	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"strings"
 	"time"
@@ -16,14 +17,14 @@ import (
 // Create instance of real database from local config
 //
 // Also return cleaner func for truncate data from tables
-func RealDb() (*pgx.Conn, func(names ...string)) {
+func RealDb() (*pgxpool.Pool, func(names ...string)) {
 	c := config.New("../config/dev.yml")
 	url, err := store.ConnectionUrl(c.Database)
 	if err != nil {
 		panic(err)
 	}
 
-	conn, err := pgx.Connect(context.Background(), url)
+	conn, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +42,7 @@ func RealDb() (*pgx.Conn, func(names ...string)) {
 }
 
 // Insert new app to app_tracking table in test database
-func AddNewApp(conn *pgx.Conn, ctx context.Context, app store.App) (int, error) {
+func AddNewApp(conn *pgxpool.Pool, ctx context.Context, app store.App) (int, error) {
 	row := conn.QueryRow(
 		ctx,
 		fmt.Sprint("insert into app_tracking (bundle, category, developerId, developer, geo, startAt, period)  values ($1, $2, $3, $4, $5, $6, $7) returning id"),
@@ -56,7 +57,7 @@ func AddNewApp(conn *pgx.Conn, ctx context.Context, app store.App) (int, error) 
 }
 
 // Insert new meta to meta_tracking table in test database
-func AddNewMeta(conn *pgx.Conn, ctx context.Context, meta store.Meta) (int, error) {
+func AddNewMeta(conn *pgxpool.Pool, ctx context.Context, meta store.Meta) (int, error) {
 	values := "(bundleId, title, price, picture, screenshots," +
 		" rating, reviewCount, ratingHistogram, description," +
 		" shortDescription, recentChanges, releaseDate, lastUpdateDate, appSize," +
@@ -97,7 +98,7 @@ func AddNewMeta(conn *pgx.Conn, ctx context.Context, meta store.Meta) (int, erro
 }
 
 // Add new track to keyword or category table in test database
-func AddNewTrack(conn *pgx.Conn, ctx context.Context, track store.Track, table string) (int, error) {
+func AddNewTrack(conn *pgxpool.Pool, ctx context.Context, track store.Track, table string) (int, error) {
 	row := conn.QueryRow(
 		ctx,
 		fmt.Sprintf("insert into %s (bundleId, type, place, date) values ($1, $2, $3, $4) returning id", table),
@@ -325,8 +326,16 @@ func (m mockMetaConnection) QueryRow(ctx context.Context, sql string, args ...in
 			Email:    "email@email.com",
 			Contacts: "virginia",
 		},
-		PrivacyPolicy: "http://privacypolicy.com",
-		Date:          t,
+		PrivacyPolicy:  "http://privacypolicy.com",
+		Date:           t,
+		AppId:          12,
+		AppBundle:      "123",
+		AppCategory:    "FINANCE",
+		AppDeveloperId: "com.develoeper",
+		AppDeveloper:   "super developer",
+		AppGeo:         "ru_RU",
+		AppStartAt:     t.AddDate(-1, 0, 0),
+		AppPeriod:      31,
 	}
 }
 
@@ -359,6 +368,15 @@ func (m mockMetaConnection) QueryFunc(ctx context.Context, sql string, args []in
 			},
 			PrivacyPolicy: "http://privacypolicy.com",
 			Date:          t,
+
+			AppId:          12,
+			AppBundle:      "123",
+			AppCategory:    "FINANCE",
+			AppDeveloperId: "com.develoeper",
+			AppDeveloper:   "super developer",
+			AppGeo:         "ru_RU",
+			AppStartAt:     t.AddDate(-1, 0, 0),
+			AppPeriod:      31,
 		}.Scan(scans...)
 
 		_ = f(mockMetaRow{})
@@ -392,6 +410,14 @@ type mockMetaRow struct {
 	DeveloperContacts store.DeveloperContacts `json:"developerContacts" db:"developer_contacts"`
 	PrivacyPolicy     string                  `json:"privacyPolicy,omitempty"`
 	Date              time.Time               `json:"date,omitempty"`
+	AppId             int                     `json:"-"`
+	AppBundle         string                  `json:"bundle,omitempty"`
+	AppCategory       string                  `json:"category,omitempty"`
+	AppDeveloperId    string                  `json:"developer_id,omitempty"`
+	AppDeveloper      string                  `json:"developer,omitempty"`
+	AppGeo            string                  `json:"geo,omitempty"`
+	AppStartAt        time.Time               `json:"start_at,omitempty"`
+	AppPeriod         uint32                  `json:"period,omitempty"`
 }
 
 func (mr mockMetaRow) FieldDescriptions() []pgproto3.FieldDescription {
@@ -425,6 +451,14 @@ func (mr mockMetaRow) Scan(dest ...interface{}) error {
 	DeveloperContacts := dest[19].(*store.DeveloperContacts)
 	PrivacyPolicy := dest[20].(*string)
 	Date := dest[21].(*time.Time)
+	AppId := dest[22].(*int)
+	AppBundle := dest[23].(*string)
+	AppCategory := dest[24].(*string)
+	AppDeveloperId := dest[25].(*string)
+	AppDeveloper := dest[26].(*string)
+	AppGeo := dest[27].(*string)
+	AppStartAt := dest[28].(*time.Time)
+	AppPeriod := dest[29].(*uint32)
 
 	*Id = mr.Id
 	*BundleId = mr.BundleId
@@ -448,6 +482,14 @@ func (mr mockMetaRow) Scan(dest ...interface{}) error {
 	*DeveloperContacts = mr.DeveloperContacts
 	*PrivacyPolicy = mr.PrivacyPolicy
 	*Date = mr.Date
+	*AppId = mr.AppId
+	*AppBundle = mr.AppBundle
+	*AppCategory = mr.AppCategory
+	*AppDeveloperId = mr.AppDeveloperId
+	*AppDeveloper = mr.AppDeveloper
+	*AppGeo = mr.AppGeo
+	*AppStartAt = mr.AppStartAt
+	*AppPeriod = mr.AppPeriod
 
 	return nil
 }
@@ -486,11 +528,19 @@ type mockTrackConnection struct {
 func (m mockTrackConnection) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	t, _ := time.Parse("2006-01-02", "2021-01-19")
 	return mockTrackRow{
-		Id:       78,
-		BundleId: 12,
-		Type:     "type",
-		Date:     t,
-		Place:    18,
+		Id:             78,
+		BundleId:       12,
+		Type:           "type",
+		Date:           t,
+		Place:          18,
+		AppId:          12,
+		AppBundle:      "123",
+		AppCategory:    "FINANCE",
+		AppDeveloperId: "com.develoeper",
+		AppDeveloper:   "super developer",
+		AppGeo:         "ru_RU",
+		AppStartAt:     t.AddDate(-1, 0, 0),
+		AppPeriod:      31,
 	}
 }
 
@@ -498,11 +548,19 @@ func (m mockTrackConnection) QueryFunc(ctx context.Context, sql string, args []i
 	t, _ := time.Parse("2006-01-02", "2021-01-19")
 	for i := 0; i < 4; i++ {
 		_ = mockTrackRow{
-			Id:       78,
-			BundleId: 12,
-			Type:     "type",
-			Date:     t,
-			Place:    18,
+			Id:             78,
+			BundleId:       12,
+			Type:           "type",
+			Date:           t,
+			Place:          18,
+			AppId:          12,
+			AppBundle:      "123",
+			AppCategory:    "FINANCE",
+			AppDeveloperId: "com.develoeper",
+			AppDeveloper:   "super developer",
+			AppGeo:         "ru_RU",
+			AppStartAt:     t.AddDate(-1, 0, 0),
+			AppPeriod:      31,
 		}.Scan(scans...)
 		t = t.AddDate(0, 0, 1)
 		_ = f(mockTrackRow{})
@@ -512,11 +570,19 @@ func (m mockTrackConnection) QueryFunc(ctx context.Context, sql string, args []i
 }
 
 type mockTrackRow struct {
-	Id       int       `json:"-"`
-	BundleId int       `json:"bundle,omitempty"`
-	Type     string    `json:"type,omitempty"`
-	Date     time.Time `json:"date,omitempty"`
-	Place    int32     `json:"place,omitempty"`
+	Id             int       `json:"-"`
+	BundleId       int       `json:"bundle,omitempty"`
+	Type           string    `json:"type,omitempty"`
+	Date           time.Time `json:"date,omitempty"`
+	Place          int32     `json:"place,omitempty"`
+	AppId          int       `json:"-"`
+	AppBundle      string    `json:"appbundle,omitempty"`
+	AppCategory    string    `json:"category,omitempty"`
+	AppDeveloperId string    `json:"developer_id,omitempty"`
+	AppDeveloper   string    `json:"developer,omitempty"`
+	AppGeo         string    `json:"geo,omitempty"`
+	AppStartAt     time.Time `json:"start_at,omitempty"`
+	AppPeriod      uint32    `json:"period,omitempty"`
 }
 
 func (mr mockTrackRow) FieldDescriptions() []pgproto3.FieldDescription {
@@ -533,16 +599,28 @@ func (mr mockTrackRow) Scan(dest ...interface{}) error {
 	Type := dest[2].(*string)
 	Place := dest[3].(*int32)
 	Date := dest[4].(*time.Time)
+	AppId := dest[5].(*int)
+	AppBundle := dest[6].(*string)
+	AppCategory := dest[7].(*string)
+	AppDeveloperId := dest[8].(*string)
+	AppDeveloper := dest[9].(*string)
+	AppGeo := dest[10].(*string)
+	AppStartAt := dest[11].(*time.Time)
+	AppPeriod := dest[12].(*uint32)
 
 	*Id = mr.Id
 	*BundleId = mr.BundleId
 	*Type = mr.Type
 	*Date = mr.Date
 	*Place = mr.Place
+	*AppId = mr.AppId
+	*AppBundle = mr.AppBundle
+	*AppCategory = mr.AppCategory
+	*AppDeveloperId = mr.AppDeveloperId
+	*AppDeveloper = mr.AppDeveloper
+	*AppGeo = mr.AppGeo
+	*AppStartAt = mr.AppStartAt
+	*AppPeriod = mr.AppPeriod
 
 	return nil
 }
-
-
-
-
