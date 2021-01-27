@@ -23,7 +23,7 @@ type App struct {
 }
 
 func (a App) To(to interface{}) error {
-	switch v :=  to.(type) {
+	switch v := to.(type) {
 	case *App:
 		*v = a
 	case *model.App:
@@ -65,6 +65,7 @@ type Meta struct {
 	DeveloperContacts DeveloperContacts `json:"developerContacts" db:"developer_contacts"`
 	PrivacyPolicy     string            `json:"privacyPolicy,omitempty"`
 	Date              time.Time         `json:"date,omitempty"`
+	App               App               `json:"app,omitempty"`
 }
 
 func (m Meta) To(to interface{}) error {
@@ -97,6 +98,9 @@ func (m Meta) To(to interface{}) error {
 		}
 		v.PrivacyPolicy = m.PrivacyPolicy
 		v.Date = m.Date
+		v.App = &model.App{}
+
+		return m.App.To(v.App)
 	default:
 		return fmt.Errorf("%s", "param 'to' not the same type with *Meta")
 	}
@@ -110,6 +114,7 @@ type Track struct {
 	Type     string    `json:"type,omitempty"`
 	Date     time.Time `json:"date,omitempty"`
 	Place    int32     `json:"place,omitempty"`
+	App      App       `json:"app,omitempty"`
 }
 
 func (tr Track) To(to interface{}) error {
@@ -122,12 +127,18 @@ func (tr Track) To(to interface{}) error {
 		v.Type = tr.Type
 		v.Date = tr.Date
 		v.Place = int(tr.Place)
+		v.App = &model.App{}
+
+		return tr.App.To(v.App)
 	case *model.Keywords:
 		v.ID = tr.Id
 		v.BundleID = tr.BundleId
 		v.Type = tr.Type
 		v.Date = tr.Date
 		v.Place = int(tr.Place)
+		v.App = &model.App{}
+
+		return tr.App.To(v.App)
 	default:
 		return fmt.Errorf("%s", "param 'to' not the same type with *Track")
 	}

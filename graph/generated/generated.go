@@ -56,6 +56,7 @@ type ComplexityRoot struct {
 	}
 
 	Categories struct {
+		App      func(childComplexity int) int
 		BundleID func(childComplexity int) int
 		Date     func(childComplexity int) int
 		ID       func(childComplexity int) int
@@ -69,6 +70,7 @@ type ComplexityRoot struct {
 	}
 
 	Keywords struct {
+		App      func(childComplexity int) int
 		BundleID func(childComplexity int) int
 		Date     func(childComplexity int) int
 		ID       func(childComplexity int) int
@@ -77,6 +79,7 @@ type ComplexityRoot struct {
 	}
 
 	Meta struct {
+		App              func(childComplexity int) int
 		Appsize          func(childComplexity int) int
 		BundleID         func(childComplexity int) int
 		ContentRating    func(childComplexity int) int
@@ -185,6 +188,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.StartAt(childComplexity), true
 
+	case "Categories.app":
+		if e.complexity.Categories.App == nil {
+			break
+		}
+
+		return e.complexity.Categories.App(childComplexity), true
+
 	case "Categories.bundleId":
 		if e.complexity.Categories.BundleID == nil {
 			break
@@ -234,6 +244,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeveloperContacts.Email(childComplexity), true
 
+	case "Keywords.app":
+		if e.complexity.Keywords.App == nil {
+			break
+		}
+
+		return e.complexity.Keywords.App(childComplexity), true
+
 	case "Keywords.bundleId":
 		if e.complexity.Keywords.BundleID == nil {
 			break
@@ -268,6 +285,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Keywords.Type(childComplexity), true
+
+	case "Meta.app":
+		if e.complexity.Meta.App == nil {
+			break
+		}
+
+		return e.complexity.Meta.App(childComplexity), true
 
 	case "Meta.appsize":
 		if e.complexity.Meta.Appsize == nil {
@@ -518,6 +542,7 @@ type Categories {
     type: String!
     place: Int!
     date: Time!
+    app: App!
 }
 
 type Keywords {
@@ -526,6 +551,7 @@ type Keywords {
     type: String!
     place: Int!
     date: Time!
+    app: App!
 }
 
 type DeveloperContacts {
@@ -556,6 +582,7 @@ type Meta{
     devContacts: DeveloperContacts!
     privacyPolicy: String!
     date: Time!
+    app: App!
 }
 
 type App{
@@ -1216,6 +1243,41 @@ func (ec *executionContext) _Categories_date(ctx context.Context, field graphql.
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Categories_app(ctx context.Context, field graphql.CollectedField, obj *model.Categories) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Categories",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.App, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.App)
+	fc.Result = res
+	return ec.marshalNApp2ᚖMuromachiᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _DeveloperContacts_email(ctx context.Context, field graphql.CollectedField, obj *model.DeveloperContacts) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1459,6 +1521,41 @@ func (ec *executionContext) _Keywords_date(ctx context.Context, field graphql.Co
 	res := resTmp.(time.Time)
 	fc.Result = res
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Keywords_app(ctx context.Context, field graphql.CollectedField, obj *model.Keywords) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Keywords",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.App, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.App)
+	fc.Result = res
+	return ec.marshalNApp2ᚖMuromachiᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Meta_id(ctx context.Context, field graphql.CollectedField, obj *model.Meta) (ret graphql.Marshaler) {
@@ -2229,6 +2326,41 @@ func (ec *executionContext) _Meta_date(ctx context.Context, field graphql.Collec
 	res := resTmp.(time.Time)
 	fc.Result = res
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Meta_app(ctx context.Context, field graphql.CollectedField, obj *model.Meta) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Meta",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.App, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.App)
+	fc.Result = res
+	return ec.marshalNApp2ᚖMuromachiᚋgraphᚋmodelᚐApp(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_meta(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3621,6 +3753,11 @@ func (ec *executionContext) _Categories(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "app":
+			out.Values[i] = ec._Categories_app(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3697,6 +3834,11 @@ func (ec *executionContext) _Keywords(ctx context.Context, sel ast.SelectionSet,
 			}
 		case "date":
 			out.Values[i] = ec._Keywords_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "app":
+			out.Values[i] = ec._Keywords_app(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3829,6 +3971,11 @@ func (ec *executionContext) _Meta(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "date":
 			out.Values[i] = ec._Meta_date(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "app":
+			out.Values[i] = ec._Meta_app(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -4159,6 +4306,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 // endregion **************************** object.gotpl ****************************
 
 // region    ***************************** type.gotpl *****************************
+
+func (ec *executionContext) marshalNApp2ᚖMuromachiᚋgraphᚋmodelᚐApp(ctx context.Context, sel ast.SelectionSet, v *model.App) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._App(ctx, sel, v)
+}
 
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)

@@ -51,11 +51,12 @@ func TestDBO_MetaShouldGiveAReferenceOfValues(t *testing.T) {
 func TestDBO_MetaShouldGiveAReferenceOfValuesToGraphqlModel(t *testing.T) {
 	meta := &model.Meta{}
 
-	dboMeta := store.Meta{Id: 10}
+	dboMeta := store.Meta{Id: 10, App: store.App{Bundle: "123"}}
 	err := dboMeta.To(meta)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 10, meta.ID)
+	assert.Equal(t, "123", meta.App.Bundle)
 }
 
 func TestDBO_Meta_ShouldReturnErrorIfWrongReference(t *testing.T) {
@@ -79,11 +80,12 @@ func TestDBO_TrackShouldGiveAReferenceOfValues(t *testing.T) {
 func TestDBO_TrackShouldGiveAReferenceOfValuesToGraphqlModel(t *testing.T) {
 	track := &model.Categories{}
 
-	dboTrack := store.Track{Id: 10}
+	dboTrack := store.Track{Id: 10, App: store.App{Bundle: "123"}}
 	err := dboTrack.To(track)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 10, track.ID)
+	assert.Equal(t, "123", track.App.Bundle)
 
 	newTrack := &model.Keywords{}
 
@@ -91,6 +93,7 @@ func TestDBO_TrackShouldGiveAReferenceOfValuesToGraphqlModel(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 10, newTrack.ID)
+	assert.Equal(t, "123", newTrack.App.Bundle)
 }
 
 func TestDBO_Track_ShouldReturnErrorIfWrongReference(t *testing.T) {

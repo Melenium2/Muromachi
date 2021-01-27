@@ -12,6 +12,7 @@ type CatRepo struct {
 
 func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (DboSlice, error) {
 	var key Track
+	var app App
 	var keys []DBO
 
 	_, err := c.conn.QueryFunc(
@@ -20,8 +21,11 @@ func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 		params,
 		[]interface{}{
 			&key.Id, &key.BundleId, &key.Type, &key.Place, &key.Date,
+			&app.Id, &app.Bundle, &app.Category, &app.DeveloperId, &app.Developer, &app.Geo,
+			&app.StartAt, &app.Period,
 		},
 		func(row pgx.QueryFuncRow) error {
+			key.App = app
 			keys = append(keys, key)
 			return nil
 		},
@@ -39,7 +43,7 @@ func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
-		"select * from category_tracking where bundleid = $1",
+		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id  where CAT.bundleid = $1",
 		bundleId,
 	)
 }
@@ -47,7 +51,7 @@ func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error
 func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
-		"select * from category_tracking where bundleid = $1 and date >= $2 and date <= $3",
+		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id where CAT.bundleid = $1 and CAT.date >= $2 and CAT.date <= $3",
 		bundleId, start, end,
 	)
 }
@@ -55,7 +59,7 @@ func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.T
 func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
-		"select * from category_tracking where bundleid = $1 order by id desc limit $2",
+		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id where CAT.bundleid = $1 order by CAT.id desc limit $2",
 		bundleId, count,
 	)
 }

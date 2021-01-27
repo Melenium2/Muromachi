@@ -23,6 +23,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps_Mock(t *testing.T) {
 	assert.NoError(t, dboSlice[0].To(&app))
 	assert.Equal(t, "Im title", app.Title)
 	assert.Equal(t, 3, len(app.Screenshots))
+	assert.Equal(t, "123", app.App.Bundle)
 	assert.NotEmpty(t, app.DeveloperContacts.Contacts)
 	assert.NotEmpty(t, app.DeveloperContacts.Email)
 }
@@ -52,6 +53,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps(t *testing.T) {
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&app))
 		assert.Equal(t, bundleId, app.BundleId)
+		assert.Equal(t, "123", app.App.Bundle)
 	}
 }
 
@@ -68,10 +70,11 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange_Mock(t *testing.T
 
 	var app, lastApp store.Meta
 	assert.NoError(t, dboSlice[0].To(&app))
-	assert.NoError(t, dboSlice[2].To(&app))
+	assert.NoError(t, dboSlice[2].To(&lastApp))
 
 	assert.True(t, app.Date.After(t1))
 	assert.True(t, lastApp.Date.Before(t2))
+	assert.Equal(t, "123", lastApp.App.Bundle)
 }
 
 func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
@@ -100,6 +103,7 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&app))
 		assert.Equal(t, bundleId, app.BundleId)
+		assert.Equal(t, "123", app.App.Bundle)
 		assert.True(t, app.Date.After(t1) && (app.Date.Before(t2) || app.Date.Equal(t2)) )
 	}
 }
@@ -142,6 +146,7 @@ func TestMetaRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&app))
 		assert.Equal(t, bundleId, app.BundleId)
+		assert.Equal(t, "123", app.App.Bundle)
 		assert.Greater(t, id, app.Id)
 		id = app.Id
 	}
