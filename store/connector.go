@@ -4,7 +4,7 @@ import (
 	"Muromachi/config"
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"io/ioutil"
 	"strings"
 )
@@ -37,8 +37,8 @@ func ConnectionUrl(config config.DBConfig) (string, error) {
 }
 
 // Connect connect to database by url
-func Connect(url string) (*pgx.Conn, error) {
-	connect, err := pgx.Connect(context.Background(), url)
+func Connect(url string) (*pgxpool.Pool, error) {
+	connect, err := pgxpool.Connect(context.Background(), url)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func Connect(url string) (*pgx.Conn, error) {
 }
 
 // InitSchema creates database schema from shemafile string
-func InitSchema(connection *pgx.Conn, schemafile string) error {
+func InitSchema(connection *pgxpool.Pool, schemafile string) error {
 	b, err := ioutil.ReadFile(schemafile)
 	if err != nil {
 		return err
@@ -68,4 +68,24 @@ func InitSchema(connection *pgx.Conn, schemafile string) error {
 
 
 	return nil
+}
+
+func EstablishConnection(config config.DBConfig) (*pgxpool.Pool, error) {
+	url, err := ConnectionUrl(config)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := Connect(url)
+	if err != nil {
+		return nil, err
+	}
+
+	err = InitSchema(conn, config.Schema)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+
+	return conn, nil
 }
