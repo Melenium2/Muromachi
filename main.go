@@ -19,8 +19,6 @@ import (
 // Показывать или нет ендпоинты https://gqlgen.com/reference/introspection/
 // Поставить ограничение по сложности запросов https://gqlgen.com/reference/complexity/
 
-// Создать индексы в бд
-
 const defaultPort = "8080"
 
 func main() {

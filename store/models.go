@@ -167,8 +167,8 @@ func (d DboSlice) To(to interface{}) error {
 		if len(v) != len(d) {
 			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
 		}
-		app := &model.App{}
 		for i, value := range d {
+			app := &model.App{}
 			if err := value.To(app); err != nil {
 				return err
 			}
@@ -178,8 +178,8 @@ func (d DboSlice) To(to interface{}) error {
 		if len(v) != len(d) {
 			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
 		}
-		meta := &model.Meta{}
 		for i, value := range d {
+			meta := &model.Meta{}
 			if err := value.To(meta); err != nil {
 				return err
 			}
@@ -189,8 +189,8 @@ func (d DboSlice) To(to interface{}) error {
 		if len(v) != len(d) {
 			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
 		}
-		cat := &model.Categories{}
 		for i, value := range d {
+			cat := &model.Categories{}
 			if err := value.To(cat); err != nil {
 				return err
 			}
@@ -200,8 +200,8 @@ func (d DboSlice) To(to interface{}) error {
 		if len(v) != len(d) {
 			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
 		}
-		key := &model.Keywords{}
 		for i, value := range d {
+			key := &model.Keywords{}
 			if err := value.To(key); err != nil {
 				return err
 			}

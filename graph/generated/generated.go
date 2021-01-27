@@ -4,10 +4,10 @@ package generated
 
 import (
 	"Muromachi/graph/model"
+	"Muromachi/graph/scalar"
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -102,16 +102,16 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Cats func(childComplexity int) int
-		Keys func(childComplexity int) int
-		Meta func(childComplexity int, id int) int
+		Cats func(childComplexity int, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) int
+		Keys func(childComplexity int, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) int
+		Meta func(childComplexity int, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) int
 	}
 }
 
 type QueryResolver interface {
-	Meta(ctx context.Context, id int) ([]*model.Meta, error)
-	Cats(ctx context.Context) ([]model.Additional, error)
-	Keys(ctx context.Context) ([]model.Additional, error)
+	Meta(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Meta, error)
+	Cats(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Categories, error)
+	Keys(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Keywords, error)
 }
 
 type executableSchema struct {
@@ -428,14 +428,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Cats(childComplexity), true
+		args, err := ec.field_Query_cats_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Cats(childComplexity, args["id"].(int), args["last"].(*int), args["start"].(*scalar.FormattedDate), args["end"].(*scalar.FormattedDate)), true
 
 	case "Query.keys":
 		if e.complexity.Query.Keys == nil {
 			break
 		}
 
-		return e.complexity.Query.Keys(childComplexity), true
+		args, err := ec.field_Query_keys_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Keys(childComplexity, args["id"].(int), args["last"].(*int), args["start"].(*scalar.FormattedDate), args["end"].(*scalar.FormattedDate)), true
 
 	case "Query.meta":
 		if e.complexity.Query.Meta == nil {
@@ -447,7 +457,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Meta(childComplexity, args["id"].(int)), true
+		return e.complexity.Query.Meta(childComplexity, args["id"].(int), args["last"].(*int), args["start"].(*scalar.FormattedDate), args["end"].(*scalar.FormattedDate)), true
 
 	}
 	return 0, false
@@ -500,8 +510,9 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "graph/schema.graphqls", Input: `scalar Time
+scalar FormattedDate
 
-interface Additional {
+type Categories {
     id: Int!
     bundleId: Int!
     type: String!
@@ -509,15 +520,7 @@ interface Additional {
     date: Time!
 }
 
-type Categories implements Additional{
-    id: Int!
-    bundleId: Int!
-    type: String!
-    place: Int!
-    date: Time!
-}
-
-type Keywords implements Additional{
+type Keywords {
     id: Int!
     bundleId: Int!
     type: String!
@@ -567,9 +570,9 @@ type App{
 }
 
 type Query {
-    meta(id: Int!): [Meta]!
-    cats: [Additional]!
-    keys: [Additional]!
+    meta(id: Int!, last: Int, start: FormattedDate, end: FormattedDate): [Meta]!
+    cats(id: Int!, last: Int, start: FormattedDate, end: FormattedDate): [Categories]!
+    keys(id: Int!, last: Int, start: FormattedDate, end: FormattedDate): [Keywords]!
 }
 `, BuiltIn: false},
 }
@@ -594,6 +597,90 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_cats_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg1
+	var arg2 *scalar.FormattedDate
+	if tmp, ok := rawArgs["start"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+		arg2, err = ec.unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start"] = arg2
+	var arg3 *scalar.FormattedDate
+	if tmp, ok := rawArgs["end"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
+		arg3, err = ec.unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end"] = arg3
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_keys_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg1
+	var arg2 *scalar.FormattedDate
+	if tmp, ok := rawArgs["start"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+		arg2, err = ec.unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start"] = arg2
+	var arg3 *scalar.FormattedDate
+	if tmp, ok := rawArgs["end"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
+		arg3, err = ec.unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end"] = arg3
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_meta_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -606,6 +693,33 @@ func (ec *executionContext) field_Query_meta_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["id"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["last"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("last"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["last"] = arg1
+	var arg2 *scalar.FormattedDate
+	if tmp, ok := rawArgs["start"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+		arg2, err = ec.unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["start"] = arg2
+	var arg3 *scalar.FormattedDate
+	if tmp, ok := rawArgs["end"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
+		arg3, err = ec.unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["end"] = arg3
 	return args, nil
 }
 
@@ -2142,7 +2256,7 @@ func (ec *executionContext) _Query_meta(ctx context.Context, field graphql.Colle
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Meta(rctx, args["id"].(int))
+		return ec.resolvers.Query().Meta(rctx, args["id"].(int), args["last"].(*int), args["start"].(*scalar.FormattedDate), args["end"].(*scalar.FormattedDate))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2175,9 +2289,16 @@ func (ec *executionContext) _Query_cats(ctx context.Context, field graphql.Colle
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_cats_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Cats(rctx)
+		return ec.resolvers.Query().Cats(rctx, args["id"].(int), args["last"].(*int), args["start"].(*scalar.FormattedDate), args["end"].(*scalar.FormattedDate))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2189,9 +2310,9 @@ func (ec *executionContext) _Query_cats(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]model.Additional)
+	res := resTmp.([]*model.Categories)
 	fc.Result = res
-	return ec.marshalNAdditional2ᚕMuromachiᚋgraphᚋmodelᚐAdditional(ctx, field.Selections, res)
+	return ec.marshalNCategories2ᚕᚖMuromachiᚋgraphᚋmodelᚐCategories(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2210,9 +2331,16 @@ func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.Colle
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_keys_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Keys(rctx)
+		return ec.resolvers.Query().Keys(rctx, args["id"].(int), args["last"].(*int), args["start"].(*scalar.FormattedDate), args["end"].(*scalar.FormattedDate))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2224,9 +2352,9 @@ func (ec *executionContext) _Query_keys(ctx context.Context, field graphql.Colle
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]model.Additional)
+	res := resTmp.([]*model.Keywords)
 	fc.Result = res
-	return ec.marshalNAdditional2ᚕMuromachiᚋgraphᚋmodelᚐAdditional(ctx, field.Selections, res)
+	return ec.marshalNKeywords2ᚕᚖMuromachiᚋgraphᚋmodelᚐKeywords(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3391,29 +3519,6 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    ************************** interface.gotpl ***************************
 
-func (ec *executionContext) _Additional(ctx context.Context, sel ast.SelectionSet, obj model.Additional) graphql.Marshaler {
-	switch obj := (obj).(type) {
-	case nil:
-		return graphql.Null
-	case model.Categories:
-		return ec._Categories(ctx, sel, &obj)
-	case *model.Categories:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Categories(ctx, sel, obj)
-	case model.Keywords:
-		return ec._Keywords(ctx, sel, &obj)
-	case *model.Keywords:
-		if obj == nil {
-			return graphql.Null
-		}
-		return ec._Keywords(ctx, sel, obj)
-	default:
-		panic(fmt.Errorf("unexpected type %T", obj))
-	}
-}
-
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
@@ -3480,7 +3585,7 @@ func (ec *executionContext) _App(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
-var categoriesImplementors = []string{"Categories", "Additional"}
+var categoriesImplementors = []string{"Categories"}
 
 func (ec *executionContext) _Categories(ctx context.Context, sel ast.SelectionSet, obj *model.Categories) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, categoriesImplementors)
@@ -3559,7 +3664,7 @@ func (ec *executionContext) _DeveloperContacts(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var keywordsImplementors = []string{"Keywords", "Additional"}
+var keywordsImplementors = []string{"Keywords"}
 
 func (ec *executionContext) _Keywords(ctx context.Context, sel ast.SelectionSet, obj *model.Keywords) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, keywordsImplementors)
@@ -4055,7 +4160,22 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAdditional2ᚕMuromachiᚋgraphᚋmodelᚐAdditional(ctx context.Context, sel ast.SelectionSet, v []model.Additional) graphql.Marshaler {
+func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
+	res, err := graphql.UnmarshalBoolean(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNCategories2ᚕᚖMuromachiᚋgraphᚋmodelᚐCategories(ctx context.Context, sel ast.SelectionSet, v []*model.Categories) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4079,7 +4199,7 @@ func (ec *executionContext) marshalNAdditional2ᚕMuromachiᚋgraphᚋmodelᚐAd
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOAdditional2MuromachiᚋgraphᚋmodelᚐAdditional(ctx, sel, v[i])
+			ret[i] = ec.marshalOCategories2ᚖMuromachiᚋgraphᚋmodelᚐCategories(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4090,21 +4210,6 @@ func (ec *executionContext) marshalNAdditional2ᚕMuromachiᚋgraphᚋmodelᚐAd
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
-	res, err := graphql.UnmarshalBoolean(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.SelectionSet, v bool) graphql.Marshaler {
-	res := graphql.MarshalBoolean(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
 }
 
 func (ec *executionContext) marshalNDeveloperContacts2ᚖMuromachiᚋgraphᚋmodelᚐDeveloperContacts(ctx context.Context, sel ast.SelectionSet, v *model.DeveloperContacts) graphql.Marshaler {
@@ -4130,6 +4235,43 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNKeywords2ᚕᚖMuromachiᚋgraphᚋmodelᚐKeywords(ctx context.Context, sel ast.SelectionSet, v []*model.Keywords) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOKeywords2ᚖMuromachiᚋgraphᚋmodelᚐKeywords(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalNMeta2ᚕᚖMuromachiᚋgraphᚋmodelᚐMeta(ctx context.Context, sel ast.SelectionSet, v []*model.Meta) graphql.Marshaler {
@@ -4458,13 +4600,6 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOAdditional2MuromachiᚋgraphᚋmodelᚐAdditional(ctx context.Context, sel ast.SelectionSet, v model.Additional) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Additional(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4487,6 +4622,51 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOCategories2ᚖMuromachiᚋgraphᚋmodelᚐCategories(ctx context.Context, sel ast.SelectionSet, v *model.Categories) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Categories(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx context.Context, v interface{}) (*scalar.FormattedDate, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(scalar.FormattedDate)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFormattedDate2ᚖMuromachiᚋgraphᚋscalarᚐFormattedDate(ctx context.Context, sel ast.SelectionSet, v *scalar.FormattedDate) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalInt(*v)
+}
+
+func (ec *executionContext) marshalOKeywords2ᚖMuromachiᚋgraphᚋmodelᚐKeywords(ctx context.Context, sel ast.SelectionSet, v *model.Keywords) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Keywords(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOMeta2ᚖMuromachiᚋgraphᚋmodelᚐMeta(ctx context.Context, sel ast.SelectionSet, v *model.Meta) graphql.Marshaler {

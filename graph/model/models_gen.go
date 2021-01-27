@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-type Additional interface {
-	IsAdditional()
-}
-
 type App struct {
 	ID          int       `json:"id"`
 	Bundle      string    `json:"bundle"`
@@ -29,8 +25,6 @@ type Categories struct {
 	Date     time.Time `json:"date"`
 }
 
-func (Categories) IsAdditional() {}
-
 type DeveloperContacts struct {
 	Email    string `json:"email"`
 	Contacts string `json:"contacts"`
@@ -43,8 +37,6 @@ type Keywords struct {
 	Place    int       `json:"place"`
 	Date     time.Time `json:"date"`
 }
-
-func (Keywords) IsAdditional() {}
 
 type Meta struct {
 	ID               int                `json:"id"`
