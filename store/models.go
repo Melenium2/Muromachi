@@ -224,3 +224,21 @@ func (d DboSlice) To(to interface{}) error {
 
 	return nil
 }
+
+type Session struct {
+	ID           int       `json:"id,omitempty"`
+	UserId       int       `json:"user_id,omitempty"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	UserAgent    string    `json:"user_agent,omitempty"`
+	Ip           string    `json:"ip,omitempty"`
+	ExpiresIn    time.Time `json:"expires_in,omitempty"`
+	CreatedAt    time.Time `json:"created_at,omitempty"`
+}
+
+type User struct {
+	ID           int       `json:"id,omitempty"`
+	ClientId     string    `json:"client_id,omitempty"`
+	ClientSecret string    `json:"client_secret,omitempty"`
+	Company      string    `json:"company,omitempty"`
+	AddedAt      time.Time `json:"added_at,omitempty"`
+}

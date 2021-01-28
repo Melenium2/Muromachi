@@ -15,3 +15,8 @@ func New(conn Conn) *TableCollection {
 		Keys: NewKeys(conn),
 	}
 }
+
+type AuthCollection struct {
+	Sessions Sessions
+	Users    UsersRepo
+}
