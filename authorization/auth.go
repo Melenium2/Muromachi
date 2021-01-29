@@ -154,7 +154,7 @@ func (security *Security) IsSessionBanned(refreshToken string) bool {
 
 // SignAccessToken create new JWTResponse for user
 //
-// If withSession flag passed additionally create ad refresh session
+// If withSession flag passed additionally create refresh session
 func (security *Security) SignAccessToken(ctx *fiber.Ctx, refreshToken string) (JWTResponse, error) {
 	var (
 		jwt JWTResponse

@@ -32,7 +32,6 @@ func RealDb() (*pgxpool.Pool, func(names ...string)) {
 	if err = store.InitSchema(conn, "../config/schema.sql"); err != nil {
 		panic(err)
 	}
-
 	return conn, func(names ...string) {
 		_, err = conn.Exec(context.Background(), fmt.Sprintf("truncate table %s CASCADE", strings.Join(names, ",")))
 		if err != nil {

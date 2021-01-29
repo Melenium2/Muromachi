@@ -71,6 +71,6 @@ create table if not exists refresh_sessions
     refreshToken text not null,
     useragent    text,
     ip           character varying(15) NOT NULL,
-    expiresIn    bigint NOT NULL,
+    expiresIn    timestamp with time zone NOT NULL NOT NULL,
     createdAt    timestamp with time zone NOT NULL DEFAULT now()
 );
