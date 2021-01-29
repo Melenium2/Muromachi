@@ -60,7 +60,7 @@ create table if not exists users
 (
     id           bigserial primary key not null,
     clientId     varchar(50) not null,
-    clientSecret varchar(50) not null,
+    clientSecret varchar(70) not null,
     company      varchar(250) not null,
     addedAt      timestamp with time zone NOT NULL DEFAULT now()
 );

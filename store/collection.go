@@ -20,3 +20,10 @@ type AuthCollection struct {
 	Sessions Sessions
 	Users    UsersRepo
 }
+
+func NewAuthCollection(conn Conn) *AuthCollection {
+	return &AuthCollection{
+		Sessions: nil,
+		Users:    NewUserRepo(conn),
+	}
+}

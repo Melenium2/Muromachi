@@ -46,6 +46,10 @@ func (s *Server) authorize(ctx *fiber.Ctx) error {
 		ctx.Status(404)
 		return err
 	}
+	if err = user.CompareSecret(request.ClientSecret); err != nil {
+		ctx.Status(401)
+		return ctx.JSON(authorization.ErrNotAuthenticated)
+	}
 	// Pass user to request context
 	ctx.Locals("request_user", &authorization.UserClaims{
 		ID:   int64(user.ID),

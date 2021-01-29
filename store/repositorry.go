@@ -21,7 +21,7 @@ type TrackingRepo interface {
 
 type UsersRepo interface {
 	Create(ctx context.Context, user User) (User, error)
-	Approve(ctx context.Context, clientId, clientSecret string) (User, error)
+	Approve(ctx context.Context, clientId string) (User, error)
 }
 
 type BlackList interface {

@@ -18,8 +18,8 @@ import (
 //
 // Also return cleaner func for truncate data from tables
 func RealDb() (*pgxpool.Pool, func(names ...string)) {
-	c := config.New("../config/dev.yml")
-	url, err := store.ConnectionUrl(c.Database)
+	cfg := config.New("../config/dev.yml")
+	url, err := store.ConnectionUrl(cfg.Database)
 	if err != nil {
 		panic(err)
 	}
@@ -29,12 +29,12 @@ func RealDb() (*pgxpool.Pool, func(names ...string)) {
 		panic(err)
 	}
 
-	if err := store.InitSchema(conn, "../config/schema.sql"); err != nil {
+	if err = store.InitSchema(conn, "../config/schema.sql"); err != nil {
 		panic(err)
 	}
 
 	return conn, func(names ...string) {
-		_, err := conn.Exec(context.Background(), fmt.Sprintf("truncate table %s CASCADE", strings.Join(names, ",")))
+		_, err = conn.Exec(context.Background(), fmt.Sprintf("truncate table %s CASCADE", strings.Join(names, ",")))
 		if err != nil {
 			log.Print(err)
 		}
