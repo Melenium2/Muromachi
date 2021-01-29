@@ -52,10 +52,9 @@ func (s *Server) authorize(ctx *fiber.Ctx) error {
 		Role: "user",
 	})
 
-	// Check type if request
+	// depending of the type chose response params
+	// if type session of refresh_token then save refresh token
 	var refreshToken string
-
-	// TODO Разобраться как правильно поступить в дданной ситуации
 	switch request.AccessType {
 	case "simple":
 		break
@@ -82,5 +81,6 @@ func (s *Server) authorize(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	// return json depending of the type of Access type
 	return ctx.JSON(accesstoken)
 }

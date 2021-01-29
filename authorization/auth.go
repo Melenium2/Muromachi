@@ -84,6 +84,8 @@ func (security *Security) ValidateSession(refreshToken string) error {
 }
 
 // Creating new refresh session in DB and return new refresh token for user
+//
+// TODO Возможно стоит сравнивать user-agent или дополнительные парамтры для ваидации
 func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error) {
 	var (
 		token  string
@@ -106,7 +108,6 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 		}
 		// Save userid for creating new session
 		userId = session.UserId
-		// TODO Возможно стоит сравнивать user-agent или дополнительные парамтры для ваидации
 	}
 
 	// If we approve user with his credentials, we have *UserClaims stored inside ctx
@@ -168,10 +169,7 @@ func (security *Security) SignAccessToken(ctx *fiber.Ctx, refreshToken string) (
 	jwt.ExpiresIn = time.Duration(security.config.JwtExpires.Seconds())
 	// If withSession additionally create an refresh session
 	if refreshToken != "" {
-		jwt.RefreshToken, err = security.StartSession(ctx, refreshToken)
-		if err != nil {
-			return JWTResponse{}, err
-		}
+		jwt.RefreshToken = refreshToken
 	}
 	// Creating access token
 	jwt.AccessToken, err = security.generator.JwtWithRefresh(claims.ID, jwt.RefreshToken)
