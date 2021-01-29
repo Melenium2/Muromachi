@@ -160,6 +160,10 @@ func TrackStruct(bundleId int, t string) store.Track {
 type mockAppConnectionErrors struct {
 }
 
+func (m mockAppConnectionErrors) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockAppConnectionErrors) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockRowError{}
 }
@@ -185,6 +189,10 @@ func (mre mockRowError) RawValues() [][]byte {
 
 // Mock connection with successful returned objects (App table)
 type mockAppConnection struct {
+}
+
+func (m mockAppConnection) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockAppConnection) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
@@ -272,6 +280,10 @@ func (mr mockRow) Scan(dest ...interface{}) error {
 type mockMetaConnectionErrors struct {
 }
 
+func (m mockMetaConnectionErrors) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockMetaConnectionErrors) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockMetaErrorRow{}
 }
@@ -297,6 +309,10 @@ func (mr mockMetaErrorRow) Scan(dest ...interface{}) error {
 
 // Mock connection with successful returned objects (Meta table)
 type mockMetaConnection struct {
+}
+
+func (m mockMetaConnection) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockMetaConnection) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
@@ -497,6 +513,10 @@ func (mr mockMetaRow) Scan(dest ...interface{}) error {
 type mockTrackConnectionErrors struct {
 }
 
+func (m mockTrackConnectionErrors) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockTrackConnectionErrors) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockMetaErrorRow{}
 }
@@ -522,6 +542,10 @@ func (mr mockTrackErrorRow) Scan(dest ...interface{}) error {
 
 // Mock connection with successful returned objects (Keyword or Category tables)
 type mockTrackConnection struct {
+}
+
+func (m mockTrackConnection) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockTrackConnection) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {

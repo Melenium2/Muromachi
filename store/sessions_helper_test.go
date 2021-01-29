@@ -30,6 +30,10 @@ func (m mockRefreshNewFuncRowSuccess) Scan(dest ...interface{}) error {
 type mockRefreshNewFuncConnSuccess struct {
 }
 
+func (m mockRefreshNewFuncConnSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockRefreshNewFuncConnSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockRefreshNewFuncRowSuccess{
 		Id:        1,
@@ -54,6 +58,10 @@ func (m mockRefreshNewFuncRowError) Scan(dest ...interface{}) error {
 }
 
 type mockRefreshNewFuncConnError struct {
+}
+
+func (m mockRefreshNewFuncConnError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockRefreshNewFuncConnError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
@@ -103,6 +111,10 @@ type mockRefreshGetFuncConnSuccess struct {
 
 }
 
+func (m mockRefreshGetFuncConnSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockRefreshGetFuncConnSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockRefreshGetFuncRowSuccss{
 		ID:           283,
@@ -135,6 +147,10 @@ type mockRefreshGetFuncConnError struct {
 
 }
 
+func (m mockRefreshGetFuncConnError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockRefreshGetFuncConnError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockRefreshGetFuncRowError{}
 }
@@ -160,6 +176,10 @@ type mockRefreshBatchFuncConnSuccess struct {
 
 }
 
+func (m mockRefreshBatchFuncConnSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockRefreshBatchFuncConnSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockRefreshBatchFuncRowSuccess{}
 }
@@ -183,6 +203,10 @@ func (m mockRefreshBatchFuncRowError) Scan(dest ...interface{}) error {
 
 type mockRefreshBatchFuncConnError struct {
 
+}
+
+func (m mockRefreshBatchFuncConnError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockRefreshBatchFuncConnError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {

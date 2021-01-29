@@ -26,6 +26,10 @@ func (m mockUserRowSuccess) Scan(dest ...interface{}) error {
 type mockUserConnectionSuccess struct {
 }
 
+func (m mockUserConnectionSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockUserConnectionSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return mockUserRowSuccess{
 		ID: 1,
@@ -44,6 +48,10 @@ func (m mockUserRowError) Scan(dest ...interface{}) error {
 }
 
 type mockUserConnectionError struct {
+}
+
+func (m mockUserConnectionError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockUserConnectionError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
@@ -84,6 +92,10 @@ func (m mockUserApproveRowSuccess) Scan(dest ...interface{}) error {
 type mockUserApproveConnectionSuccess struct {
 }
 
+func (m mockUserApproveConnectionSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
 func (m mockUserApproveConnectionSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	user := store.User{Company: "123"}
 	_ = user.GenerateSecrets()
@@ -109,6 +121,10 @@ func (m mockUserApproveRowError) Scan(dest ...interface{}) error {
 }
 
 type mockUserApproveConnectionError struct {
+}
+
+func (m mockUserApproveConnectionError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
 }
 
 func (m mockUserApproveConnectionError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
