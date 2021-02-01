@@ -44,7 +44,7 @@ func loadEnvs(e ...string) map[string]string {
 	return envs
 }
 
-// New Create new instance of app config with given path to (../config.yml)
+// New Create new instance of apprepo config with given path to (../config.yml)
 func New(p ...string) Config {
 	path := "./dev.yml"
 	if len(p) > 0 {
@@ -57,7 +57,7 @@ func New(p ...string) Config {
 	}
 
 	config := Config{}
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	if err = yaml.Unmarshal(data, &config); err != nil {
 		panic(err)
 	}
 

@@ -58,7 +58,7 @@ func (gen *securityGenerator) JwtWithRefresh(userId int64, refreshToken string) 
 		},
 		UserClaims: &UserClaims{
 			ID:   userId,
-			Role: "user",
+			Role: "userrepo",
 		},
 	})
 

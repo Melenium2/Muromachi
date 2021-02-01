@@ -1,17 +1,27 @@
-package store
+package sessionrepo
 
 import (
+	"Muromachi/store/connector"
+	"Muromachi/store/entities"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
 
-type RefreshRepo struct {
-	conn Conn
+type RefreshSessions interface {
+	New(ctx context.Context, session entities.Session) (entities.Session, error)
+	Get(ctx context.Context, token string) (entities.Session, error)
+	Remove(ctx context.Context, token string) (entities.Session, error)
+	RemoveBatch(ctx context.Context, sessionid ...int) error
+	UserSessions(ctx context.Context, userId int) ([]entities.Session, error)
 }
 
-func (r *RefreshRepo) New(ctx context.Context, session Session) (Session, error) {
+type RefreshRepo struct {
+	conn connector.Conn
+}
+
+func (r *RefreshRepo) New(ctx context.Context, session entities.Session) (entities.Session, error) {
 	row := r.conn.QueryRow(
 		ctx,
 		"insert into refresh_sessions (userId, refreshToken, useragent, ip, expiresIn) values ($1, $2, $3, $4, $5) returning id, createdAt",
@@ -20,7 +30,7 @@ func (r *RefreshRepo) New(ctx context.Context, session Session) (Session, error)
 	var id int
 	var t time.Time
 	if err := row.Scan(&id, &t); err != nil {
-		return Session{}, err
+		return entities.Session{}, err
 	}
 
 	session.ID = id
@@ -29,13 +39,13 @@ func (r *RefreshRepo) New(ctx context.Context, session Session) (Session, error)
 	return session, nil
 }
 
-func (r *RefreshRepo) Get(ctx context.Context, token string) (Session, error) {
+func (r *RefreshRepo) Get(ctx context.Context, token string) (entities.Session, error) {
 	row := r.conn.QueryRow(
 		ctx,
 		"select * from refresh_sessions where refreshToken = $1",
 		token,
 	)
-	var session Session
+	var session entities.Session
 	if err := row.Scan(
 		&session.ID,
 		&session.UserId,
@@ -45,19 +55,19 @@ func (r *RefreshRepo) Get(ctx context.Context, token string) (Session, error) {
 		&session.ExpiresIn,
 		&session.CreatedAt,
 	); err != nil {
-		return Session{}, err
+		return entities.Session{}, err
 	}
 
 	return session, nil
 }
 
-func (r *RefreshRepo) Remove(ctx context.Context, token string) (Session, error) {
+func (r *RefreshRepo) Remove(ctx context.Context, token string) (entities.Session, error) {
 	row := r.conn.QueryRow(
 		ctx,
 		"delete from refresh_sessions where refreshToken = $1 returning *",
 		token,
 	)
-	var session Session
+	var session entities.Session
 	if err := row.Scan(
 		&session.ID,
 		&session.UserId,
@@ -67,7 +77,7 @@ func (r *RefreshRepo) Remove(ctx context.Context, token string) (Session, error)
 		&session.ExpiresIn,
 		&session.CreatedAt,
 	); err != nil {
-		return Session{}, err
+		return entities.Session{}, err
 	}
 
 	return session, nil
@@ -82,20 +92,20 @@ func (r *RefreshRepo) RemoveBatch(ctx context.Context, sessionid ...int) error {
 		ids += fmt.Sprintf("%d,", v)
 	}
 	ids = ids[:len(ids)-1]
-	row := r.conn.QueryRow(
+	_, err := r.conn.Exec(
 		ctx,
 		"delete from refresh_sessions where id in (" + ids + ")",
 	)
-	if err := row.Scan();err != nil {
+	if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (r *RefreshRepo) UserSessions(ctx context.Context, userId int) ([]Session, error) {
-	var sess Session
-	var sessions []Session
+func (r *RefreshRepo) UserSessions(ctx context.Context, userId int) ([]entities.Session, error) {
+	var sess entities.Session
+	var sessions []entities.Session
 
 	_, err := r.conn.QueryFunc(
 		ctx,
@@ -117,7 +127,7 @@ func (r *RefreshRepo) UserSessions(ctx context.Context, userId int) ([]Session, 
 	return sessions, nil
 }
 
-func NewRefreshRepo(conn Conn) *RefreshRepo {
+func New(conn connector.Conn) *RefreshRepo {
 	return &RefreshRepo{
 		conn: conn,
 	}

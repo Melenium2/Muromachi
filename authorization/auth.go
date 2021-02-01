@@ -3,6 +3,7 @@ package authorization
 import (
 	"Muromachi/config"
 	"Muromachi/store"
+	"Muromachi/store/entities"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v4"
@@ -77,40 +78,40 @@ func (security *Security) ApplyAuthMiddleware(c *fiber.Ctx) error {
 }
 
 // Checking if the refresh token has expired and valid then
-// it means that we need create new session refresh token
+// it means that we need create new sessionrepo refresh token
 func (security *Security) ValidateSession(refreshToken string) error {
 	// TODO Пока что хз стоит ли делать эту функцию
 	return nil
 }
 
-// Creating new refresh session in DB and return new refresh token for user
+// Creating new refresh sessionrepo in DB and return new refresh token for userrepo
 //
-// TODO Возможно стоит сравнивать user-agent или дополнительные парамтры для ваидации
+// TODO Возможно стоит сравнивать userrepo-agent или дополнительные парамтры для ваидации
 func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error) {
 	var (
 		token  string
 		userId int
 	)
-	// If we recreating existed refresh session
+	// If we recreating existed refresh sessionrepo
 	if len(refreshToken) > 0 && refreshToken[0] != "" {
 		token = refreshToken[0]
-		// Remove old session and get her value
+		// Remove old sessionrepo and get her value
 		session, err := security.sessions.Remove(ctx.Context(), token)
 		if err != nil {
 			if err == pgx.ErrNoRows {
-				return "", fmt.Errorf("%s", "session not found")
+				return "", fmt.Errorf("%s", "sessionrepo not found")
 			}
 			return "", err
 		}
-		// Check if session not expired
+		// Check if sessionrepo not expired
 		if session.ExpiresIn.After(time.Now()) {
 			return "", ErrExpiredRefreshToken
 		}
-		// Save userid for creating new session
+		// Save userid for creating new sessionrepo
 		userId = session.UserId
 	}
 
-	// If we approve user with his credentials, we have *UserClaims stored inside ctx
+	// If we approve userrepo with his credentials, we have *UserClaims stored inside ctx
 	if userId == 0 {
 		claims, ok := ctx.Locals("request_user").(*UserClaims)
 		if !ok {
@@ -118,7 +119,7 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 		}
 		userId = int(claims.ID)
 	}
-	// Check if user has < 5 opened sessions
+	// Check if userrepo has < 5 opened sessions
 	userSessions, err := security.sessions.UserSessions(ctx.Context(), userId)
 	if len(userSessions) > 5 {
 		// Map only ids of sessions
@@ -132,8 +133,8 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 		}
 	}
 
-	// Create new session in DB
-	newSession, err := security.sessions.New(ctx.Context(), store.Session{
+	// Create new sessionrepo in DB
+	newSession, err := security.sessions.New(ctx.Context(), entities.Session{
 		UserId:       userId,
 		RefreshToken: security.generator.Refresh(),
 		UserAgent:    string(ctx.Context().UserAgent()),
@@ -152,22 +153,22 @@ func (security *Security) IsSessionBanned(refreshToken string) bool {
 	return false
 }
 
-// SignAccessToken create new JWTResponse for user
+// SignAccessToken create new JWTResponse for userrepo
 //
-// If withSession flag passed additionally create refresh session
+// If withSession flag passed additionally create refresh sessionrepo
 func (security *Security) SignAccessToken(ctx *fiber.Ctx, refreshToken string) (JWTResponse, error) {
 	var (
 		jwt JWTResponse
 		err error
 	)
-	// Get user from context
+	// Get userrepo from context
 	claims, ok := ctx.Locals("request_user").(*UserClaims)
 	if !ok {
 		return JWTResponse{}, ErrEmptyContext
 	}
 	jwt.TokenType = "Bearer"
 	jwt.ExpiresIn = time.Duration(security.config.JwtExpires.Seconds())
-	// If withSession additionally create an refresh session
+	// If withSession additionally create an refresh sessionrepo
 	if refreshToken != "" {
 		jwt.RefreshToken = refreshToken
 	}

@@ -1,7 +1,7 @@
-package store_test
+package userrepo_test
 
 import (
-	"Muromachi/store"
+	"Muromachi/store/entities"
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
@@ -44,7 +44,7 @@ type mockUserRowError struct {
 }
 
 func (m mockUserRowError) Scan(dest ...interface{}) error {
-	return fmt.Errorf("%s", "can not save user")
+	return fmt.Errorf("%s", "can not save userrepo")
 }
 
 type mockUserConnectionError struct {
@@ -97,7 +97,7 @@ func (m mockUserApproveConnectionSuccess) Exec(ctx context.Context, sql string, 
 }
 
 func (m mockUserApproveConnectionSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
-	user := store.User{Company: "123"}
+	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 	_, _ = user.SecureSecret()
 	return mockUserApproveRowSuccess{
@@ -134,3 +134,4 @@ func (m mockUserApproveConnectionError) QueryRow(ctx context.Context, sql string
 func (m mockUserApproveConnectionError) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
 	return nil, nil
 }
+

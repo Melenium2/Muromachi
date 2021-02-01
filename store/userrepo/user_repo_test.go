@@ -1,7 +1,9 @@
-package store_test
+package userrepo_test
 
 import (
-	"Muromachi/store"
+	"Muromachi/store/entities"
+	"Muromachi/store/testhelpers"
+	user2 "Muromachi/store/userrepo"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
@@ -10,12 +12,12 @@ import (
 
 func TestUserRepo_Create_ShouldCreateNewUserAndPutItToDatabase_Mock(t *testing.T) {
 	conn := mockUserConnectionSuccess{}
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	var (
 		err  error
-		user = store.User{
+		user = entities.User{
 			Company: "123",
 		}
 	)
@@ -29,14 +31,14 @@ func TestUserRepo_Create_ShouldCreateNewUserAndPutItToDatabase_Mock(t *testing.T
 }
 
 func TestUserRepo_Create_ShouldCreateNewUserAndPutItToDatabase(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users")
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	var (
 		err  error
-		user = store.User{
+		user = entities.User{
 			Company: "123",
 		}
 	)
@@ -51,11 +53,11 @@ func TestUserRepo_Create_ShouldCreateNewUserAndPutItToDatabase(t *testing.T) {
 
 func TestUserRepo_Create_ShouldReturnErrorBecauseUserHasNotClientIdAndSecret_Mock(t *testing.T) {
 	conn := mockUserConnectionSuccess{}
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	var (
-		user = store.User{
+		user = entities.User{
 			Company: "123",
 		}
 	)
@@ -65,14 +67,14 @@ func TestUserRepo_Create_ShouldReturnErrorBecauseUserHasNotClientIdAndSecret_Moc
 }
 
 func TestUserRepo_Create_ShouldReturnErrorBecauseUserHasNotClientIdAndSecret(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users")
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	var (
 		err  error
-		user = store.User{
+		user = entities.User{
 			Company: "123",
 		}
 	)
@@ -83,11 +85,11 @@ func TestUserRepo_Create_ShouldReturnErrorBecauseUserHasNotClientIdAndSecret(t *
 
 func TestUserRepo_Create_ShouldReturnErrorIfCanNotCreateUser_Mock(t *testing.T) {
 	conn := mockUserConnectionError{}
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	var (
-		user = store.User{
+		user = entities.User{
 			Company: "123",
 		}
 	)
@@ -97,15 +99,15 @@ func TestUserRepo_Create_ShouldReturnErrorIfCanNotCreateUser_Mock(t *testing.T) 
 }
 
 func TestUserRepo_Create_ShouldReturnErrorIfCanNotCreateUser(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users")
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	conn.Close()
 	var (
 		err  error
-		user = store.User{
+		user = entities.User{
 			Company: "123",
 		}
 	)
@@ -117,7 +119,7 @@ func TestUserRepo_Create_ShouldReturnErrorIfCanNotCreateUser(t *testing.T) {
 
 func TestUserRepo_Approve_ShouldGetUserFromDatabase_Mock(t *testing.T) {
 	conn := mockUserApproveConnectionSuccess{}
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	usr, err := repo.Approve(ctx, "nudopustim1")
@@ -128,14 +130,14 @@ func TestUserRepo_Approve_ShouldGetUserFromDatabase_Mock(t *testing.T) {
 }
 
 func TestUserRepo_Approve_ShouldGetUserFromDatabase(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users")
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	var (
 		err  error
-		user = store.User{Company: "123"}
+		user = entities.User{Company: "123"}
 	)
 	_ = user.GenerateSecrets()
 
@@ -147,7 +149,6 @@ func TestUserRepo_Approve_ShouldGetUserFromDatabase(t *testing.T) {
 	usr, err := repo.Approve(ctx, user.ClientId)
 	assert.NoError(t, err)
 	assert.Equal(t, user.ID, usr.ID)
-	assert.Equal(t, user.ClientSecret, usr.ClientSecret)
 	assert.Equal(t, user.ClientId, usr.ClientId)
 
 	assert.NoError(t, usr.CompareSecret(secret))
@@ -155,7 +156,7 @@ func TestUserRepo_Approve_ShouldGetUserFromDatabase(t *testing.T) {
 
 func TestUserRepo_Approve_ShouldReturnErrorIfClientIdDoesNotExist_Mock(t *testing.T) {
 	conn := mockUserApproveConnectionError{}
-	repo := store.NewUserRepo(conn)
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	_, err := repo.Approve(ctx, "nudopustim1")
@@ -164,8 +165,8 @@ func TestUserRepo_Approve_ShouldReturnErrorIfClientIdDoesNotExist_Mock(t *testin
 }
 
 func TestUserRepo_Approve_ShouldReturnErrorIfClientIdDoesNotExist(t *testing.T) {
-	conn, _ := RealDb()
-	repo := store.NewUserRepo(conn)
+	conn, _ := testhelpers.RealDb()
+	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 
 	_, err := repo.Approve(ctx, "nudopustim1")
