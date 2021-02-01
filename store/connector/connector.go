@@ -1,4 +1,4 @@
-package store
+package connector
 
 import (
 	"Muromachi/config"

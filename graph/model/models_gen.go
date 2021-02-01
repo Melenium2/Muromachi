@@ -23,7 +23,7 @@ type Categories struct {
 	Type     string    `json:"type"`
 	Place    int       `json:"place"`
 	Date     time.Time `json:"date"`
-	App      *App      `json:"app"`
+	App      *App      `json:"apprepo"`
 }
 
 type DeveloperContacts struct {
@@ -37,7 +37,7 @@ type Keywords struct {
 	Type     string    `json:"type"`
 	Place    int       `json:"place"`
 	Date     time.Time `json:"date"`
-	App      *App      `json:"app"`
+	App      *App      `json:"apprepo"`
 }
 
 type Meta struct {
@@ -63,5 +63,5 @@ type Meta struct {
 	DevContacts      *DeveloperContacts `json:"devContacts"`
 	PrivacyPolicy    string             `json:"privacyPolicy"`
 	Date             time.Time          `json:"date"`
-	App              *App               `json:"app"`
+	App              *App               `json:"apprepo"`
 }

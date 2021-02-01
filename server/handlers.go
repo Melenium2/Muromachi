@@ -40,26 +40,29 @@ func (s *Server) authorize(ctx *fiber.Ctx) error {
 		ctx.Status(404)
 		return err
 	}
-	// Check if user with this client id and secret exists
-	user, err := s.sessions.Users.Approve(ctx.Context(), request.ClientId, request.ClientSecret)
+	// Check if userrepo with this client id and secret exists
+	user, err := s.sessions.Users.Approve(ctx.Context(), request.ClientId)
 	if err != nil {
 		ctx.Status(404)
 		return err
 	}
-	// Pass user to request context
+	if err = user.CompareSecret(request.ClientSecret); err != nil {
+		ctx.Status(401)
+		return ctx.JSON(authorization.ErrNotAuthenticated)
+	}
+	// Pass userrepo to request context
 	ctx.Locals("request_user", &authorization.UserClaims{
 		ID:   int64(user.ID),
-		Role: "user",
+		Role: "userrepo",
 	})
 
-	// Check type if request
+	// depending of the type chose response params
+	// if type sessionrepo or refresh_token then get new refresh token
 	var refreshToken string
-
-	// TODO Разобраться как правильно поступить в дданной ситуации
 	switch request.AccessType {
 	case "simple":
 		break
-	case "session":
+	case "sessionrepo":
 		refreshToken, err = s.security.StartSession(ctx)
 		if err != nil {
 			return err
@@ -82,5 +85,6 @@ func (s *Server) authorize(ctx *fiber.Ctx) error {
 		return err
 	}
 
+	// return json depending of the type of Access type
 	return ctx.JSON(accesstoken)
 }

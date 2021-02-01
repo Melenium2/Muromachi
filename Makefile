@@ -13,7 +13,7 @@ run:
 get:
 	go get ./...
 
-## deploy: Run commands to deploy app to container
+## deploy: Run commands to deploy apprepo to container
 deploy:
 	make get
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \

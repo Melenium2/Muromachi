@@ -1,7 +1,9 @@
-package store_test
+package apprepo_test
 
 import (
-	"Muromachi/store"
+	"Muromachi/store/apprepo"
+	"Muromachi/store/entities"
+	"Muromachi/store/testhelpers"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
@@ -10,26 +12,27 @@ import (
 )
 
 func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps_Mock(t *testing.T) {
+
 	conn := mockAppConnection{}
-	repo := store.NewApp(conn)
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 10)
 	assert.NoError(t, err)
 	assert.NotNil(t, dboSlice)
 
-	var app store.App
+	var app entities.App
 	assert.NoError(t, dboSlice[0].To(&app))
 	assert.Equal(t, "FINANCE", app.Category)
 }
 
 func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("app_tracking")
-	repo := store.NewApp(conn)
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
-	app := store.App{
+	app := entities.App{
 		Bundle:      "com.test.hello",
 		Category:    "FINANCE",
 		DeveloperId: "imdevid",
@@ -38,21 +41,21 @@ func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps(t *testing.T) {
 		StartAt:     time.Now(),
 		Period:      31,
 	}
-	id, err := AddNewApp(conn, ctx, app)
+	id, err := testhelpers.AddNewApp(conn, ctx, app)
 	assert.NoError(t, err)
 
 	dbo, err := repo.ByBundleId(ctx, id)
 	assert.NoError(t, err)
 	assert.NotNil(t, dbo)
 
-	var appFromDb store.App
+	var appFromDb entities.App
 	assert.NoError(t, dbo[0].To(&appFromDb))
 	assert.Equal(t, id, appFromDb.Id)
 }
 
 func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval_Mock(t *testing.T) {
 	conn := mockAppConnection{}
-	repo := store.NewApp(conn)
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
 	timestamp, _ := time.Parse("2006-01-01", "2020-01-01")
@@ -63,8 +66,8 @@ func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval_Mock(
 	assert.NoError(t, err)
 	assert.NotNil(t, dboSlice)
 
-	var app store.App
-	var secondApp store.App
+	var app entities.App
+	var secondApp entities.App
 	assert.NoError(t, dboSlice[0].To(&app))
 	assert.NoError(t, dboSlice[1].To(&secondApp))
 
@@ -73,8 +76,8 @@ func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval_Mock(
 }
 
 func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseTheFuncNotAllowedInThisTable(t *testing.T) {
-	conn, _ := RealDb()
-	repo := store.NewApp(conn)
+	conn, _ := testhelpers.RealDb()
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
 	_, err := repo.LastUpdates(ctx, 10, 10)
@@ -83,7 +86,7 @@ func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseTheFuncNotAllowedInThisTabl
 
 func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseThisTableHasNotInfo_Mock(t *testing.T) {
 	conn := mockAppConnection{}
-	repo := store.NewApp(conn)
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
 	_, err := repo.LastUpdates(ctx, 10, 1)
@@ -92,7 +95,7 @@ func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseThisTableHasNotInfo_Mock(t 
 
 func TestAppRepo_ByBundleId_ShouldReturnErrNoRows_Mock(t *testing.T) {
 	conn := mockAppConnectionErrors{}
-	repo := store.NewApp(conn)
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
 	_, err := repo.ByBundleId(ctx, 10)
@@ -102,7 +105,7 @@ func TestAppRepo_ByBundleId_ShouldReturnErrNoRows_Mock(t *testing.T) {
 
 func TestAppRepo_ByBundleIdShouldReturnErrNoRows_Mock(t *testing.T) {
 	conn := mockAppConnectionErrors{}
-	repo := store.NewApp(conn)
+	repo := apprepo.New(conn)
 	ctx := context.Background()
 
 	_, err := repo.TimeRange(ctx, 10, time.Now(), time.Now().AddDate(0, 0, 1))

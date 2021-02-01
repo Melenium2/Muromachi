@@ -1,20 +1,22 @@
-package store
+package trackepo
 
 import (
+	"Muromachi/store/connector"
+	"Muromachi/store/entities"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
 
 type KeysRepo struct {
-	conn Conn
+	conn connector.Conn
 }
 
-func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (DboSlice, error) {
+func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var (
-		key  Track
-		app  App
-		keys []DBO
+		key  entities.Track
+		app  entities.App
+		keys []entities.DBO
 	)
 
 	_, err := k.conn.QueryFunc(
@@ -42,7 +44,7 @@ func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...inter
 	return keys, nil
 }
 
-func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error) {
+func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
 		"select * from keyword_tracking KEY inner join app_tracking APP on KEY.bundleid = APP.id where KEY.bundleid = $1",
@@ -50,7 +52,7 @@ func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, erro
 	)
 }
 
-func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (DboSlice, error) {
+func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
 		"select * from keyword_tracking KEY inner join app_tracking APP on KEY.bundleid = APP.id where KEY.bundleid = $1 and KEY.date >= $2 and KEY.date <= $3",
@@ -58,7 +60,7 @@ func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.
 	)
 }
 
-func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSlice, error) {
+func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
 		"select * from keyword_tracking KEY inner join app_tracking APP on KEY.bundleid = APP.id where KEY.bundleid = $1 order by KEY.id desc limit $2",
@@ -66,7 +68,7 @@ func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSli
 	)
 }
 
-func NewKeys(conn Conn) *KeysRepo {
+func NewKeys(conn connector.Conn) *KeysRepo {
 	return &KeysRepo{
 		conn: conn,
 	}

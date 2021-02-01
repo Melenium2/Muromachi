@@ -5,6 +5,7 @@ import (
 	"Muromachi/config"
 	"Muromachi/graph"
 	"Muromachi/store"
+	"Muromachi/store/connector"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"log"
@@ -41,7 +42,7 @@ func (s *Server) Listen() error {
 func New(port string, config config.Config) *Server {
 	// Init postgres
 	config.Database.Schema = "../config/schema.sql"
-	conn, err := store.EstablishConnection(config.Database)
+	conn, err := connector.EstablishConnection(config.Database)
 	if err != nil {
 		log.Fatal(err)
 	}

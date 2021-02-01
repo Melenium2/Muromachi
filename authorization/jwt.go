@@ -2,12 +2,9 @@ package authorization
 
 import (
 	"Muromachi/config"
-	"crypto/rand"
-	"crypto/sha256"
+	"Muromachi/utils"
 	"errors"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
-	"io"
 	"log"
 	"time"
 )
@@ -34,35 +31,12 @@ type securityGenerator struct {
 	config config.Authorization
 }
 
-func (gen *securityGenerator) UUID() (string, error) {
-	uuid := make([]byte, 16)
-	n, err := io.ReadFull(rand.Reader, uuid)
-	if n != len(uuid) || err != nil {
-		return "", err
-	}
-	uuid[8] = uuid[8]&^0xc0 | 0x80
-	uuid[6] = uuid[6]&^0xf0 | 0x40
-	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:]), nil
-}
-
-func (gen *securityGenerator) Hash(str string, random interface{}) string {
-	salt := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, salt)
-	if err != nil {
-		panic(fmt.Sprintf("terrible hash, %v", err))
-	}
-	secret := fmt.Sprintf("%s_%s_%v", str, salt, random)
-	hash := sha256.Sum256([]byte(secret))
-
-	return fmt.Sprintf("%x", hash)
-}
-
 func (gen *securityGenerator) Refresh() string {
-	uuid, err := gen.UUID()
+	uuid, err := utils.UUID()
 	if err != nil {
 		return ""
 	}
-	return gen.Hash(uuid, time.Now().Unix())
+	return utils.Hash(uuid, time.Now().Unix())
 }
 
 func (gen *securityGenerator) Jwt(userId int64) (string, error) {
@@ -84,7 +58,7 @@ func (gen *securityGenerator) JwtWithRefresh(userId int64, refreshToken string) 
 		},
 		UserClaims: &UserClaims{
 			ID:   userId,
-			Role: "user",
+			Role: "userrepo",
 		},
 	})
 
