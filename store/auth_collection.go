@@ -2,11 +2,12 @@ package store
 
 import (
 	"Muromachi/store/connector"
+	"Muromachi/store/sessions"
 	"Muromachi/store/userrepo"
 )
 
 type AuthCollection struct {
-	Sessions Sessions
+	Sessions sessions.Sessions
 	Users    userrepo.UsersRepo
 }
 

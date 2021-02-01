@@ -53,16 +53,16 @@ func authorize(sec authorization.Defender, sessions *store.AuthCollection) func(
 		// Pass userrepo to request context
 		ctx.Locals("request_user", &authorization.UserClaims{
 			ID:   int64(user.ID),
-			Role: "userrepo",
+			Role: "user",
 		})
 
 		// depending of the type chose response params
-		// if type sessionrepo or refresh_token then get new refresh token
+		// if type session or refresh_token then get new refresh token
 		var refreshToken string
 		switch request.AccessType {
 		case "simple":
 			break
-		case "sessionrepo":
+		case "session":
 			refreshToken, err = sec.StartSession(ctx)
 			if err != nil {
 				return httpresp.Error(ctx, 400, err)

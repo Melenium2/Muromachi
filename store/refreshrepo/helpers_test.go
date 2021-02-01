@@ -1,4 +1,4 @@
-package sessionrepo_test
+package refreshrepo_test
 
 import (
 	"context"
@@ -55,7 +55,7 @@ type mockRefreshNewFuncRowError struct {
 }
 
 func (m mockRefreshNewFuncRowError) Scan(dest ...interface{}) error {
-	return fmt.Errorf("%s", "can not create sessionrepo")
+	return fmt.Errorf("%s", "can not create refreshrepo")
 }
 
 type mockRefreshNewFuncConnError struct {

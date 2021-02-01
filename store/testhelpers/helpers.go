@@ -15,9 +15,14 @@ import (
 // Create instance of real database from local config
 //
 // Also return cleaner func for truncate data from tables
-func RealDb() (*pgxpool.Pool, func(names ...string)) {
-	cfg := config.New("../../config/dev.yml")
-	url, err := connector.ConnectionUrl(cfg.Database)
+func RealDb(c ...config.DBConfig) (*pgxpool.Pool, func(names ...string)) {
+	var cfg config.DBConfig
+	if len(c) > 0 {
+		cfg = c[0]
+	} else {
+		cfg = config.New("../../config/dev.yml").Database
+	}
+	url, err := connector.ConnectionUrl(cfg)
 	if err != nil {
 		panic(err)
 	}
@@ -27,7 +32,7 @@ func RealDb() (*pgxpool.Pool, func(names ...string)) {
 		panic(err)
 	}
 
-	if err = connector.InitSchema(conn, "../../config/schema.sql"); err != nil {
+	if err = connector.InitSchema(conn, cfg.Schema); err != nil {
 		panic(err)
 	}
 	return conn, func(names ...string) {

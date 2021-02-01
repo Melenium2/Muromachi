@@ -1,9 +1,9 @@
-package sessionrepo_test
+package refreshrepo_test
 
 import (
 	"Muromachi/store/connector"
 	"Muromachi/store/entities"
-	"Muromachi/store/sessionrepo"
+	"Muromachi/store/refreshrepo"
 	"Muromachi/store/testhelpers"
 	"Muromachi/store/userrepo"
 	"context"
@@ -63,7 +63,7 @@ func TestRefreshRepo_New(t *testing.T) {
 			if test.cleaner != nil {
 				defer cleaner("refresh_sessions")
 			}
-			repo := sessionrepo.New(test.conn)
+			repo := refreshrepo.New(test.conn)
 			ctx := context.Background()
 			s := entities.Session{
 				UserId:       u.ID,
@@ -94,7 +94,7 @@ func TestRefreshRepo_Get(t *testing.T) {
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := sessionrepo.New(conn)
+	sesRepo := refreshrepo.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -113,28 +113,28 @@ func TestRefreshRepo_Get(t *testing.T) {
 		doError       bool
 	}{
 		{
-			name:          "mock | should get sessionrepo from db",
+			name:          "mock | should get refreshrepo from db",
 			conn:          mockRefreshGetFuncConnSuccess{},
 			token:         "123",
 			expectedError: false,
 			doError:       false,
 		},
 		{
-			name:          "should get sessionrepo from db with token = " + s.RefreshToken,
+			name:          "should get refreshrepo from db with token = " + s.RefreshToken,
 			conn:          conn,
 			token:         "123",
 			expectedError: false,
 			doError:       false,
 		},
 		{
-			name:          "mock | get error if sessionrepo not found",
+			name:          "mock | get error if refreshrepo not found",
 			conn:          mockRefreshGetFuncConnError{},
 			token:         "net tot token =)",
 			expectedError: true,
 			doError:       false,
 		},
 		{
-			name:          "get error if sessionrepo not found",
+			name:          "get error if refreshrepo not found",
 			conn:          conn,
 			token:         "net tot token =)",
 			expectedError: true,
@@ -151,7 +151,7 @@ func TestRefreshRepo_Get(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := sessionrepo.New(test.conn)
+			repo := refreshrepo.New(test.conn)
 			ctx := context.Background()
 
 			if test.doError {
@@ -175,7 +175,7 @@ func TestRefreshRepo_Remove(t *testing.T) {
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := sessionrepo.New(conn)
+	sesRepo := refreshrepo.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -194,28 +194,28 @@ func TestRefreshRepo_Remove(t *testing.T) {
 		doError       bool
 	}{
 		{
-			name:          "mock | should remove sessionrepo from db",
+			name:          "mock | should remove refreshrepo from db",
 			conn:          mockRefreshGetFuncConnSuccess{},
 			token:         "123",
 			expectedError: false,
 			doError:       false,
 		},
 		{
-			name:          "mock | get error if sessionrepo not found",
+			name:          "mock | get error if refreshrepo not found",
 			conn:          mockRefreshGetFuncConnError{},
 			token:         "123",
 			expectedError: true,
 			doError:       false,
 		},
 		{
-			name:          "should remove sessionrepo with token = 123",
+			name:          "should remove refreshrepo with token = 123",
 			conn:          conn,
 			token:         "123",
 			expectedError: false,
 			doError:       false,
 		},
 		{
-			name:          "get error if sessionrepo not found",
+			name:          "get error if refreshrepo not found",
 			conn:          conn,
 			token:         "123",
 			expectedError: true,
@@ -225,7 +225,7 @@ func TestRefreshRepo_Remove(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := sessionrepo.New(test.conn)
+			repo := refreshrepo.New(test.conn)
 			ctx := context.Background()
 
 			if test.doError {
@@ -249,7 +249,7 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := sessionrepo.New(conn)
+	sesRepo := refreshrepo.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -272,13 +272,13 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 		expectedError bool
 	}{
 		{
-			name:          "mock | should remove sessionrepo from db",
+			name:          "mock | should remove refreshrepo from db",
 			conn:          mockRefreshBatchFuncConnSuccess{},
 			ids:           []int{1, 2, 3},
 			expectedError: false,
 		},
 		{
-			name:          "should remove sessionrepo with ids",
+			name:          "should remove refreshrepo with ids",
 			conn:          conn,
 			ids:           ids,
 			expectedError: false,
@@ -287,7 +287,7 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := sessionrepo.New(test.conn)
+			repo := refreshrepo.New(test.conn)
 			ctx := context.Background()
 
 			err := repo.RemoveBatch(ctx, test.ids...)
@@ -307,7 +307,7 @@ func TestRefreshRepo_UserSessions(t *testing.T) {
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := sessionrepo.New(conn)
+	sesRepo := refreshrepo.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -357,7 +357,7 @@ func TestRefreshRepo_UserSessions(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := sessionrepo.New(test.conn)
+			repo := refreshrepo.New(test.conn)
 			ctx := context.Background()
 
 			ses, err := repo.UserSessions(ctx, test.id)

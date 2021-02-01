@@ -2,8 +2,8 @@ package authorization
 
 import (
 	"Muromachi/config"
-	"Muromachi/store"
 	"Muromachi/store/entities"
+	"Muromachi/store/sessions"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v4"
@@ -29,7 +29,7 @@ type Defender interface {
 type Security struct {
 	config    config.Authorization
 	generator *securityGenerator
-	sessions  store.Sessions
+	sessions  sessions.Sessions
 }
 
 func (security *Security) ApplyRequestIdMiddleware(c *fiber.Ctx) error {
@@ -52,22 +52,22 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 		token  string
 		userId int
 	)
-	// If we recreating existed refresh sessionrepo
+	// If we recreating existed refresh session
 	if len(refreshToken) > 0 && refreshToken[0] != "" {
 		token = refreshToken[0]
 		// Remove old session and get her value
 		session, err := security.sessions.Remove(ctx.Context(), token)
 		if err != nil {
 			if err == pgx.ErrNoRows {
-				return "", fmt.Errorf("%s", "sessionrepo not found")
+				return "", fmt.Errorf("%s", "session not found")
 			}
 			return "", err
 		}
 		// Check if session not expired
-		if session.ExpiresIn.After(time.Now()) {
+		if time.Now().After(session.ExpiresIn) {
 			return "", ErrExpiredRefreshToken
 		}
-		// Save userid for creating new sessionrepo
+		// Save userid for creating new session
 		userId = session.UserId
 	}
 
@@ -145,7 +145,7 @@ func (security *Security) ValidateJwt(token string) (*Claims, error) {
 	return security.generator.ValidateJwt(token)
 }
 
-func NewSecurity(config config.Authorization, sessions store.Sessions) *Security {
+func NewSecurity(config config.Authorization, sessions sessions.Sessions) *Security {
 	return &Security{
 		config:    config,
 		generator: newSecurityGen(config),

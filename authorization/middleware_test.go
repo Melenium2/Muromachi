@@ -3,9 +3,7 @@ package authorization_test
 import (
 	"Muromachi/authorization"
 	"Muromachi/config"
-	"Muromachi/store/entities"
 	"Muromachi/utils"
-	"context"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber/v2"
@@ -15,69 +13,6 @@ import (
 	"testing"
 	"time"
 )
-
-type mockSession struct {
-}
-
-func (m mockSession) AddBlock() {
-}
-
-func (m mockSession) CheckBlock() {
-}
-
-func (m mockSession) New(ctx context.Context, session entities.Session) (entities.Session, error) {
-	return entities.Session{
-		ID:           1,
-		UserId:       123,
-		RefreshToken: "123",
-		UserAgent:    "123",
-		Ip:           "10.10.0.1",
-		ExpiresIn:    time.Now().AddDate(0, 0, 1),
-		CreatedAt:    time.Now(),
-	}, nil
-}
-
-func (m mockSession) Get(ctx context.Context, token string) (entities.Session, error) {
-	return entities.Session{
-		ID:           1,
-		UserId:       123,
-		RefreshToken: "123",
-		UserAgent:    "123",
-		Ip:           "10.10.0.1",
-		ExpiresIn:    time.Now().AddDate(0, 0, 1),
-		CreatedAt:    time.Now(),
-	}, nil
-}
-
-func (m mockSession) Remove(ctx context.Context, token string) (entities.Session, error) {
-	return entities.Session{
-		ID:           1,
-		UserId:       123,
-		RefreshToken: "123",
-		UserAgent:    "123",
-		Ip:           "10.10.0.1",
-		ExpiresIn:    time.Now().AddDate(0, 0, 1),
-		CreatedAt:    time.Now(),
-	}, nil
-}
-
-func (m mockSession) RemoveBatch(ctx context.Context, sessionid ...int) error {
-	return nil
-}
-
-func (m mockSession) UserSessions(ctx context.Context, userId int) ([]entities.Session, error) {
-	return []entities.Session{
-		{
-			ID:           1,
-			UserId:       123,
-			RefreshToken: "123",
-			UserAgent:    "123",
-			Ip:           "10.10.0.1",
-			ExpiresIn:    time.Now().AddDate(0, 0, 1),
-			CreatedAt:    time.Now(),
-		},
-	}, nil
-}
 
 func TestApplyAuthMiddleware_Mock(t *testing.T) {
 	app := fiber.New()
