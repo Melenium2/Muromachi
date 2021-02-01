@@ -3,6 +3,7 @@ package server
 import (
 	"Muromachi/authorization"
 	"Muromachi/graph/generated"
+	"Muromachi/httpresp"
 	"Muromachi/store"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
@@ -39,15 +40,15 @@ func authorize(sec authorization.Defender, sessions *store.AuthCollection) func(
 		)
 		// parse body as JWTRequest
 		if err := ctx.BodyParser(&request); err != nil {
-			return HttpError(ctx, 404, err)
+			return httpresp.Error(ctx, 404, err)
 		}
 		// Check if userrepo with this client id and secret exists
 		user, err := sessions.Users.Approve(ctx.Context(), request.ClientId)
 		if err != nil {
-			return HttpError(ctx, 404, err)
+			return httpresp.Error(ctx, 404, err)
 		}
 		if err = user.CompareSecret(request.ClientSecret); err != nil {
-			return HttpError(ctx, 401, authorization.ErrNotAuthenticated)
+			return httpresp.Error(ctx, 401, authorization.ErrNotAuthenticated)
 		}
 		// Pass userrepo to request context
 		ctx.Locals("request_user", &authorization.UserClaims{
@@ -64,15 +65,15 @@ func authorize(sec authorization.Defender, sessions *store.AuthCollection) func(
 		case "sessionrepo":
 			refreshToken, err = sec.StartSession(ctx)
 			if err != nil {
-				return HttpError(ctx, 400, err)
+				return httpresp.Error(ctx, 400, err)
 			}
 		case "refresh_token":
 			refreshToken, err = sec.StartSession(ctx, request.RefreshToken)
 			if err != nil {
-				return HttpError(ctx, 400, err)
+				return httpresp.Error(ctx, 400, err)
 			}
 		default:
-			return HttpError(ctx, 404, map[string]interface{}{
+			return httpresp.Error(ctx, 404, map[string]interface{}{
 				"error": "need to provide access type for request",
 			})
 		}
@@ -80,7 +81,7 @@ func authorize(sec authorization.Defender, sessions *store.AuthCollection) func(
 		// Create jwt object
 		accesstoken, err := sec.SignAccessToken(ctx, refreshToken)
 		if err != nil {
-			return HttpError(ctx, 400, err)
+			return httpresp.Error(ctx, 400, err)
 		}
 
 		// return json depending of the type of Access type

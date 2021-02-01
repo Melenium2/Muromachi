@@ -1,9 +1,8 @@
 package authorization
 
 import (
-	"Muromachi/server"
+	"Muromachi/httpresp"
 	"github.com/gofiber/fiber/v2"
-	"time"
 )
 
 // Authentication middleware for service
@@ -17,7 +16,7 @@ func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 			authToken := c.Get("Authorization", "")
 			if authToken == "" {
 				// cookie and headers empty -> return err
-				return server.HttpError(c, 401, ErrNotAuthenticated)
+				return httpresp.Error(c, 401, ErrNotAuthenticated)
 			} else {
 				token = authToken[7:]
 			}
@@ -28,21 +27,14 @@ func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 		// Validate jwt
 		claims, err := security.ValidateJwt(token)
 		if err != nil {
-			ErrNotAuthenticated["additional"] = err
-			return server.HttpError(c, 401, ErrNotAuthenticated)
+			ErrNotAuthenticated["additional"] = err.Error()
+			return httpresp.Error(c, 401, ErrNotAuthenticated)
 		}
 
 		// Check if refresh token is banned in redis
 		// TODO Сделать Redis
 		if security.IsSessionBanned(claims.Id) {
-			return server.HttpError(c, 401, ErrNotAuthenticated)
-		}
-
-		expiredTime := time.Unix(claims.ExpiresAt, 0)
-		// Is Jwt token expired ?
-		if expiredTime.After(time.Now()) {
-			ErrNotAuthenticated["additional"] = ErrExpiredAccessToken
-			return server.HttpError(c, 401, ErrNotAuthenticated)
+			return httpresp.Error(c, 401, ErrNotAuthenticated)
 		}
 
 		c.Locals("request_user", claims.UserClaims)

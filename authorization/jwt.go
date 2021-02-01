@@ -58,11 +58,11 @@ func (gen *securityGenerator) JwtWithRefresh(userId int64, refreshToken string) 
 		},
 		UserClaims: &UserClaims{
 			ID:   userId,
-			Role: "userrepo",
+			Role: "user",
 		},
 	})
 
-	return token.SignedString(gen.config.JwtSalt)
+	return token.SignedString([]byte(gen.config.JwtSalt))
 }
 
 func (gen *securityGenerator) ValidateJwt(token string) (*Claims, error) {
