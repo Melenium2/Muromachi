@@ -3,6 +3,7 @@ package server
 import (
 	"Muromachi/authorization"
 	"Muromachi/graph/generated"
+	"Muromachi/store"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gofiber/fiber/v2"
@@ -31,60 +32,59 @@ func graphql(resolver generated.ResolverRoot) func(ctx *fiber.Ctx) error {
 }
 
 // Auth endpoint
-func (s *Server) authorize(ctx *fiber.Ctx) error {
-	var (
-		request     authorization.JWTRequest
-	)
-	// parse body as JWTRequest
-	if err := ctx.BodyParser(&request); err != nil {
-		ctx.Status(404)
-		return err
-	}
-	// Check if userrepo with this client id and secret exists
-	user, err := s.sessions.Users.Approve(ctx.Context(), request.ClientId)
-	if err != nil {
-		ctx.Status(404)
-		return err
-	}
-	if err = user.CompareSecret(request.ClientSecret); err != nil {
-		ctx.Status(401)
-		return ctx.JSON(authorization.ErrNotAuthenticated)
-	}
-	// Pass userrepo to request context
-	ctx.Locals("request_user", &authorization.UserClaims{
-		ID:   int64(user.ID),
-		Role: "userrepo",
-	})
-
-	// depending of the type chose response params
-	// if type sessionrepo or refresh_token then get new refresh token
-	var refreshToken string
-	switch request.AccessType {
-	case "simple":
-		break
-	case "sessionrepo":
-		refreshToken, err = s.security.StartSession(ctx)
-		if err != nil {
-			return err
+func authorize(sec authorization.Defender, sessions *store.AuthCollection) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		var (
+			request     authorization.JWTRequest
+		)
+		// parse body as JWTRequest
+		if err := ctx.BodyParser(&request); err != nil {
+			return HttpError(ctx, 404, err)
 		}
-	case "refresh_token":
-		refreshToken, err = s.security.StartSession(ctx, request.RefreshToken)
+		// Check if userrepo with this client id and secret exists
+		user, err := sessions.Users.Approve(ctx.Context(), request.ClientId)
 		if err != nil {
-			return err
+			return HttpError(ctx, 404, err)
 		}
-	default:
-		ctx.Status(404)
-		return ctx.JSON(map[string]interface{}{
-			"error": "need to provide access type for request",
+		if err = user.CompareSecret(request.ClientSecret); err != nil {
+			return HttpError(ctx, 401, authorization.ErrNotAuthenticated)
+		}
+		// Pass userrepo to request context
+		ctx.Locals("request_user", &authorization.UserClaims{
+			ID:   int64(user.ID),
+			Role: "userrepo",
 		})
-	}
 
-	// Create jwt object
-	accesstoken, err := s.security.SignAccessToken(ctx, refreshToken)
-	if err != nil {
-		return err
-	}
+		// depending of the type chose response params
+		// if type sessionrepo or refresh_token then get new refresh token
+		var refreshToken string
+		switch request.AccessType {
+		case "simple":
+			break
+		case "sessionrepo":
+			refreshToken, err = sec.StartSession(ctx)
+			if err != nil {
+				return HttpError(ctx, 400, err)
+			}
+		case "refresh_token":
+			refreshToken, err = sec.StartSession(ctx, request.RefreshToken)
+			if err != nil {
+				return HttpError(ctx, 400, err)
+			}
+		default:
+			return HttpError(ctx, 404, map[string]interface{}{
+				"error": "need to provide access type for request",
+			})
+		}
 
-	// return json depending of the type of Access type
-	return ctx.JSON(accesstoken)
+		// Create jwt object
+		accesstoken, err := sec.SignAccessToken(ctx, refreshToken)
+		if err != nil {
+			return HttpError(ctx, 400, err)
+		}
+
+		// return json depending of the type of Access type
+		return ctx.JSON(accesstoken)
+	}
 }
+

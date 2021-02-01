@@ -15,7 +15,7 @@ type Server struct {
 	app      *fiber.App
 	port     string
 	config   config.Config
-	security *authorization.Security
+	security authorization.Defender
 	resolver *graph.Resolver
 	sessions *store.AuthCollection
 	tracking *store.TableCollection
@@ -26,12 +26,12 @@ func (s *Server) InitRoutes() {
 	//Graphql playground
 	s.app.All("/playground", testground())
 	// GraphQL Group
-	ql := s.app.Group("/ql", s.security.ApplyAuthMiddleware)
+	ql := s.app.Group("/ql", authorization.ApplyAuthMiddleware(s.security))
 	ql.All("/query", graphql(s.resolver))
 
 	// Rest
 	// Auth
-	s.app.Post("/authorize", s.authorize)
+	s.app.Post("/authorize", authorize(s.security, s.sessions))
 }
 
 func (s *Server) Listen() error {
