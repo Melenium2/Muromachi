@@ -5,7 +5,7 @@ import (
 	"Muromachi/store/entities"
 	"Muromachi/store/sessionrepo"
 	"Muromachi/store/testhelpers"
-	user2 "Muromachi/store/userrepo"
+	"Muromachi/store/userrepo"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ func TestRefreshRepo_New(t *testing.T) {
 	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users")
 
-	repo := user2.NewUserRepo(conn)
+	repo := userrepo.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
@@ -87,7 +87,7 @@ func TestRefreshRepo_Get(t *testing.T) {
 	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users", "refresh_sessions")
 
-	repo := user2.NewUserRepo(conn)
+	repo := userrepo.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
@@ -168,7 +168,7 @@ func TestRefreshRepo_Remove(t *testing.T) {
 	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users", "refresh_sessions")
 
-	repo := user2.NewUserRepo(conn)
+	repo := userrepo.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
@@ -242,7 +242,7 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("users", "refresh_sessions")
 
-	repo := user2.NewUserRepo(conn)
+	repo := userrepo.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
@@ -292,6 +292,79 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 
 			err := repo.RemoveBatch(ctx, test.ids...)
 			assert.Equal(t, test.expectedError, err != nil)
+		})
+	}
+}
+
+func TestRefreshRepo_UserSessions(t *testing.T) {
+	conn, cleaner := testhelpers.RealDb()
+	defer cleaner("users", "refresh_sessions")
+
+	repo := userrepo.NewUserRepo(conn)
+	user := entities.User{Company: "123"}
+	_ = user.GenerateSecrets()
+
+	u, err := repo.Create(context.Background(), user)
+	assert.NoError(t, err)
+
+	sesRepo := sessionrepo.New(conn)
+	session := entities.Session{
+		UserId:       u.ID,
+		RefreshToken: "123",
+		UserAgent:    "123",
+		Ip:           "123",
+		ExpiresIn:    time.Now().AddDate(0, 0, 30),
+	}
+	ids := make([]int, 3)
+	for i := 0; i < 3; i++ {
+		s, err := sesRepo.New(context.Background(), session)
+		assert.NoError(t, err)
+		session.RefreshToken += fmt.Sprint(i)
+		ids[i] = s.ID
+	}
+
+	var tt = []struct {
+		name          string
+		conn          connector.Conn
+		id            int
+		expectedError bool
+	} {
+		{
+			name:          "mock | should get all users available tokens",
+			conn:          mockUserSessionsFuncConnSuccess{},
+			id:            123,
+			expectedError: false,
+		},
+		{
+			name:          "should get precomputed users from real db",
+			conn:          conn,
+			id:            u.ID,
+			expectedError: false,
+		},
+		{
+			name:          "mock | no error if user sessions by id not found",
+			conn:          mockUserSessionsFuncConnError{},
+			id:            -123,
+			expectedError: false,
+		},
+		{
+			name:          "no error if user sessions not found",
+			conn:          conn,
+			id:            -1,
+			expectedError: false,
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			repo := sessionrepo.New(test.conn)
+			ctx := context.Background()
+
+			ses, err := repo.UserSessions(ctx, test.id)
+			assert.Equal(t, test.expectedError, err != nil)
+			if !test.expectedError {
+				assert.GreaterOrEqual(t, len(ses), 0)
+			}
 		})
 	}
 }

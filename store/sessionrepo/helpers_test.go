@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgproto3/v2"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
@@ -90,7 +91,7 @@ type mockRefreshGetFuncRowSuccss struct {
 func (m mockRefreshGetFuncRowSuccss) Scan(dest ...interface{}) error {
 	id := dest[0].(*int)
 	userid := dest[1].(*int)
-	refreshToken:= dest[2].(*string)
+	refreshToken := dest[2].(*string)
 	ua := dest[3].(*string)
 	ip := dest[4].(*string)
 	expires := dest[5].(*time.Time)
@@ -108,7 +109,6 @@ func (m mockRefreshGetFuncRowSuccss) Scan(dest ...interface{}) error {
 }
 
 type mockRefreshGetFuncConnSuccess struct {
-
 }
 
 func (m mockRefreshGetFuncConnSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
@@ -144,7 +144,6 @@ func (m mockRefreshGetFuncRowError) Scan(dest ...interface{}) error {
 }
 
 type mockRefreshGetFuncConnError struct {
-
 }
 
 func (m mockRefreshGetFuncConnError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
@@ -165,7 +164,6 @@ func (m mockRefreshGetFuncConnError) QueryFunc(ctx context.Context, sql string, 
 //
 
 type mockRefreshBatchFuncRowSuccess struct {
-
 }
 
 func (m mockRefreshBatchFuncRowSuccess) Scan(dest ...interface{}) error {
@@ -173,7 +171,6 @@ func (m mockRefreshBatchFuncRowSuccess) Scan(dest ...interface{}) error {
 }
 
 type mockRefreshBatchFuncConnSuccess struct {
-
 }
 
 func (m mockRefreshBatchFuncConnSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
@@ -194,7 +191,6 @@ func (m mockRefreshBatchFuncConnSuccess) QueryFunc(ctx context.Context, sql stri
 //
 
 type mockRefreshBatchFuncRowError struct {
-
 }
 
 func (m mockRefreshBatchFuncRowError) Scan(dest ...interface{}) error {
@@ -202,7 +198,6 @@ func (m mockRefreshBatchFuncRowError) Scan(dest ...interface{}) error {
 }
 
 type mockRefreshBatchFuncConnError struct {
-
 }
 
 func (m mockRefreshBatchFuncConnError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
@@ -217,3 +212,116 @@ func (m mockRefreshBatchFuncConnError) QueryFunc(ctx context.Context, sql string
 	return nil, nil
 }
 
+//
+// Method: UserSessions
+// Case: Success
+//
+type mockUserSessionsFuncConnSuccess struct {
+}
+
+func (m mockUserSessionsFuncConnSuccess) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	return nil
+}
+
+func (m mockUserSessionsFuncConnSuccess) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
+	for i := 0; i < 5; i++ {
+		_ = mockUserSessionsRowSuccess{
+			ID:           i + 1,
+			UserId:       123,
+			RefreshToken: "123",
+			UserAgent:    "213",
+			Ip:           "123",
+			ExpiresIn:    time.Now().AddDate(0, 0, 30),
+			CreatedAt:    time.Now(),
+		}.Scan(scans...)
+		_ = f(mockUserSessionsRowSuccess{})
+	}
+
+	return nil, nil
+}
+
+func (m mockUserSessionsFuncConnSuccess) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
+type mockUserSessionsRowSuccess struct {
+	ID           int       `json:"id,omitempty"`
+	UserId       int       `json:"user_id,omitempty"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	UserAgent    string    `json:"user_agent,omitempty"`
+	Ip           string    `json:"ip,omitempty"`
+	ExpiresIn    time.Time `json:"expires_in,omitempty"`
+	CreatedAt    time.Time `json:"created_at,omitempty"`
+}
+
+func (m mockUserSessionsRowSuccess) FieldDescriptions() []pgproto3.FieldDescription {
+	return nil
+}
+
+func (m mockUserSessionsRowSuccess) RawValues() [][]byte {
+	return nil
+}
+
+func (m mockUserSessionsRowSuccess) Scan(dest ...interface{}) error {
+	id := dest[0].(*int)
+	userId := dest[1].(*int)
+	refreshToken := dest[2].(*string)
+	userAgent := dest[3].(*string)
+	ip := dest[4].(*string)
+	expiresIn := dest[5].(*time.Time)
+	createdAt := dest[6].(*time.Time)
+
+	*id = m.ID
+	*userId = m.UserId
+	*refreshToken = m.RefreshToken
+	*userAgent = m.UserAgent
+	*ip = m.Ip
+	*expiresIn = m.ExpiresIn
+	*createdAt = m.CreatedAt
+
+	return nil
+}
+
+//
+// Method: UserSessions
+// Case: Error
+//
+
+type mockUserSessionsFuncConnError struct {
+}
+
+func (m mockUserSessionsFuncConnError) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
+	return nil
+}
+
+func (m mockUserSessionsFuncConnError) QueryFunc(ctx context.Context, sql string, args []interface{}, scans []interface{}, f func(pgx.QueryFuncRow) error) (pgconn.CommandTag, error) {
+	err := mockUserSessionsRowError{}.Scan()
+	if err != nil {
+		return nil, err
+	}
+	err = f(mockUserSessionsRowError{})
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}
+
+func (m mockUserSessionsFuncConnError) Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error) {
+	return nil, nil
+}
+
+type mockUserSessionsRowError struct {
+}
+
+func (m mockUserSessionsRowError) FieldDescriptions() []pgproto3.FieldDescription {
+	return nil
+}
+
+func (m mockUserSessionsRowError) RawValues() [][]byte {
+	return nil
+}
+
+func (m mockUserSessionsRowError) Scan(dest ...interface{}) error {
+	return nil
+}

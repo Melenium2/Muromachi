@@ -112,7 +112,7 @@ func (r *RefreshRepo) UserSessions(ctx context.Context, userId int) ([]entities.
 		"select * from refresh_sessions where userId = $1",
 		[]interface{} { userId },
 		[]interface{} {
-			&sess.UserId, &sess.RefreshToken, &sess.UserAgent,
+			&sess.ID, &sess.UserId, &sess.RefreshToken, &sess.UserAgent,
 			&sess.Ip, &sess.ExpiresIn, &sess.CreatedAt,
 		},
 		func(row pgx.QueryFuncRow) error {

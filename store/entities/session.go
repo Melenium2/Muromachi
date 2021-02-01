@@ -8,6 +8,6 @@ type Session struct {
 	RefreshToken string    `json:"refresh_token,omitempty"`
 	UserAgent    string    `json:"user_agent,omitempty"`
 	Ip           string    `json:"ip,omitempty"`
-	ExpiresIn    time.Time `json:"expires_in,omitempdty"`
+	ExpiresIn    time.Time `json:"expires_in,omitempty"`
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 }
