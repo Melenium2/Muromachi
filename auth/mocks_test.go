@@ -3,6 +3,7 @@ package auth_test
 import (
 	"Muromachi/store/entities"
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
@@ -15,7 +16,7 @@ func (m mockSession) Add(ctx context.Context, key string, value interface{}, ttl
 }
 
 func (m mockSession) CheckIfExist(ctx context.Context, key string) error {
-	return nil
+	return fmt.Errorf("%s", "key not found")
 }
 
 func (m mockSession) New(ctx context.Context, session entities.Session) (entities.Session, error) {

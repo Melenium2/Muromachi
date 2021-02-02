@@ -45,13 +45,13 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 			expectedStatusCode: 401,
 		},
 		{
-			name:               "200 if jwt found in header values",
+			name:               "200 if jwt founded in header values",
 			withJwt:            true,
 			withCookieJwt:      false,
 			expectedStatusCode: 200,
 		},
 		{
-			name:               "200 if jwt found in cookies values",
+			name:               "200 if jwt founded in cookies values",
 			withJwt:            false,
 			withCookieJwt:      true,
 			expectedStatusCode: 200,
@@ -71,14 +71,13 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 		},
 	}
 
-	// TODO Добавить кейс с isBaned
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			localTime := time.Now().Add(cfg.JwtExpires)
 			if test.withExpiredJwt {
 				localTime = localTime.Add(time.Hour * -24)
 			}
-			rtoken, _ := utils.UUID()
+			rtoken := utils.Hash("123", "123")
 			jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &auth.Claims{
 				StandardClaims: &jwt.StandardClaims{
 					Audience:  cfg.JwtAud,

@@ -31,8 +31,7 @@ func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 			return httpresp.Error(c, 401, ErrNotAuthenticated)
 		}
 
-		// CheckAndDel if refresh token is banned in redis
-		// TODO Сделать Redis
+		// Check if refresh token is banned in redis
 		if claims.Id != "" {
 			if security.IsSessionBanned(c.Context(),claims.Id) {
 				return httpresp.Error(c, 401, ErrNotAuthenticated)
