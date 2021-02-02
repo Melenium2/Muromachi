@@ -5,6 +5,7 @@ import (
 	"Muromachi/store/entities"
 	"Muromachi/store/refreshrepo"
 	"context"
+	"time"
 )
 
 type Sessions interface {
@@ -17,10 +18,12 @@ type sessionsImpl struct {
 	blacklist banrepo.BlackList
 }
 
-func (s sessionsImpl) AddBlock() {
+func (s sessionsImpl) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return s.blacklist.Add(ctx, key, value, ttl)
 }
 
-func (s sessionsImpl) CheckBlock() {
+func (s sessionsImpl) CheckIfExist(ctx context.Context, key string) error {
+	return s.blacklist.CheckIfExist(ctx, key)
 }
 
 func (s sessionsImpl) New(ctx context.Context, session entities.Session) (entities.Session, error) {
@@ -45,6 +48,7 @@ func (s sessionsImpl) UserSessions(ctx context.Context, userId int) ([]entities.
 
 func New(sessions refreshrepo.RefreshSessions, blacklist banrepo.BlackList) *sessionsImpl {
 	return &sessionsImpl{
-		sessions: sessions,
+		sessions:  sessions,
+		blacklist: blacklist,
 	}
 }

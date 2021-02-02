@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-
-
 type TrackingRepo interface {
 	ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error)
 	ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error)

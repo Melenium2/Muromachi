@@ -3,6 +3,7 @@ package auth_test
 import (
 	"Muromachi/auth"
 	"Muromachi/config"
+	"Muromachi/store/banrepo"
 	"Muromachi/store/entities"
 	"Muromachi/store/refreshrepo"
 	"Muromachi/store/sessions"
@@ -49,6 +50,13 @@ func TestSecurity_StartSession_Mock(t *testing.T) {
 		{
 			name:          "expired refresh session",
 			session:       mockSessionRemoveExpiredSession{},
+			refreshToken:  "123",
+			passUserCtx:   false,
+			expectedError: true,
+		},
+		{
+			name:          "session in black list",
+			session:       mockSessionBannedToken{},
 			refreshToken:  "123",
 			passUserCtx:   false,
 			expectedError: true,
@@ -202,6 +210,54 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionIsExpired(t *tes
 
 		token, err := security.StartSession(ctx, "123")
 		assert.Error(t, err)
+		assert.Empty(t, token)
+
+		return nil
+	})
+
+	req, _ := http.NewRequest("GET", "/", nil)
+	_, _ = app.Test(req)
+}
+
+func TestSecurity_StartSession_ShouldReturnErrorIfSessionInBlackList(t *testing.T) {
+	cfg := config.Authorization{
+		JwtSalt:    "hiprivetsalt",
+		JwtExpires: time.Hour * 24,
+		JwtIss:     "apptwice.com",
+	}
+	dbcfg := config.New("../config/dev.yml")
+	dbcfg.Database.Schema = "../config/schema.sql"
+	conn, cleaner := testhelpers.RealDb(dbcfg.Database)
+	defer cleaner("refresh_sessions", "users")
+
+	u := entities.User{
+		Company: "123",
+	}
+	_ = u.GenerateSecrets()
+	user, _ := userrepo.NewUserRepo(conn).Create(context.Background(), u)
+
+	sess := refreshrepo.New(conn)
+	_, _ = sess.New(context.Background(), entities.Session{
+		UserId:       user.ID,
+		RefreshToken: "123",
+		UserAgent:    "",
+		Ip:           "",
+		ExpiresIn:    time.Now().Add(time.Hour * 24),
+	})
+
+	redisConn, redisCleaner := testhelpers.RedisDb(dbcfg.Database.Redis)
+	defer redisCleaner()
+
+	balcklist := banrepo.New(redisConn)
+	assert.NoError(t, balcklist.Add(context.Background(), "123", 1, time.Hour))
+
+	security := auth.NewSecurity(cfg, sessions.New(sess, balcklist))
+
+	app := fiber.New()
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		token, err := security.StartSession(ctx, "123")
+		assert.Error(t, err)
+		t.Log(err)
 		assert.Empty(t, token)
 
 		return nil

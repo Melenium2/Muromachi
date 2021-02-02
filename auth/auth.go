@@ -4,6 +4,7 @@ import (
 	"Muromachi/config"
 	"Muromachi/store/entities"
 	"Muromachi/store/sessions"
+	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v4"
@@ -21,7 +22,8 @@ var (
 
 type Defender interface {
 	StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error)
-	IsSessionBanned(refreshToken string) bool
+	IsSessionBanned(ctx context.Context, refreshToken string) bool
+	BanSessions(ctx context.Context, tokens ...entities.Session) error
 	SignAccessToken(ctx *fiber.Ctx, refreshToken string) (JWTResponse, error)
 	ValidateJwt(accessToken string) (*Claims, error)
 }
@@ -33,15 +35,8 @@ type Security struct {
 }
 
 func (security *Security) ApplyRequestIdMiddleware(c *fiber.Ctx) error {
-	// TODO Добавить реквест id к каждому запросу
+	// TODO Добавить реквест id к каждому запросу. Переместить метод в другой файл
 	return c.Next()
-}
-
-// Checking if the refresh token has expired and valid then
-// it means that we need create new session refresh token
-func (security *Security) ValidateSession(refreshToken string) error {
-	// TODO Пока что хз стоит ли делать эту функцию
-	return nil
 }
 
 // Creating new refresh session in DB and return new refresh token for user
@@ -63,9 +58,12 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 			}
 			return "", err
 		}
-		// Check if session not expired
+		// CheckAndDel if session not expired
 		if time.Now().After(session.ExpiresIn) {
 			return "", ErrExpiredRefreshToken
+		}
+		if security.IsSessionBanned(ctx.Context(), token) {
+			return "", fmt.Errorf("%s", "your refresh session in blacklist")
 		}
 		// Save userid for creating new session
 		userId = session.UserId
@@ -79,7 +77,7 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 		}
 		userId = int(claims.ID)
 	}
-	// Check if user has < 5 opened sessions
+	// CheckAndDel if user has < 5 opened sessions
 	userSessions, err := security.sessions.UserSessions(ctx.Context(), userId)
 	if len(userSessions) > 5 {
 		// Map only ids of sessions
@@ -108,9 +106,28 @@ func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (
 }
 
 // Check refresh token in the black list. If contains then return true
-func (security *Security) IsSessionBanned(refreshToken string) bool {
-	// TODO тут описываем способ получения данных о забанненых токенах в редисе
-	return false
+func (security *Security) IsSessionBanned(ctx context.Context, refreshToken string) bool {
+	err := security.sessions.CheckIfExist(ctx, refreshToken)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+// Adding tokens to black list, so that the user can not access service with
+// passed refresh token
+func (security *Security) BanSessions(ctx context.Context, tokens ...entities.Session) error {
+	for _, t := range tokens {
+		if err := security.sessions.Add(
+			ctx,
+			t.RefreshToken,
+			t.ID,
+			time.Duration(t.ExpiresIn.Unix()*1000),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // SignAccessToken create new JWTResponse for user

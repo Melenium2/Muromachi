@@ -5,6 +5,7 @@ import (
 	"Muromachi/graph/generated"
 	"Muromachi/httpresp"
 	"Muromachi/store"
+	"Muromachi/store/entities"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gofiber/fiber/v2"
@@ -33,7 +34,7 @@ func graphql(resolver generated.ResolverRoot) func(ctx *fiber.Ctx) error {
 }
 
 // Auth endpoint
-func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(ctx *fiber.Ctx) error {
+func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		var (
 			request auth.JWTRequest
@@ -42,7 +43,7 @@ func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(ctx *fibe
 		if err := ctx.BodyParser(&request); err != nil {
 			return httpresp.Error(ctx, 404, err.Error())
 		}
-		// Check if user with this client id and secret exists
+		// CheckAndDel if user with this client id and secret exists
 		user, err := sessions.Users.Approve(ctx.Context(), request.ClientId)
 		if err != nil {
 			return httpresp.Error(ctx, 404, err.Error())
@@ -87,3 +88,41 @@ func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(ctx *fibe
 	}
 }
 
+// Generate new company in system
+func NewCompany(sessions *store.AuthCollection) func(*fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		var err error
+		company := ctx.Query("c")
+		if company == "" {
+			return httpresp.Error(ctx, 404, "empty company query")
+		}
+
+		user := entities.User{
+			Company:      company,
+		}
+		err = user.GenerateSecrets()
+		if err != nil {
+			return httpresp.Error(ctx, 400, "can not generate secrets")
+		}
+		user, err = sessions.Users.Create(ctx.Context(), user)
+		if err != nil {
+			return httpresp.Error(ctx, 400, err)
+		}
+
+		return ctx.JSON(user)
+	}
+}
+
+// Ban refresh session
+func Ban(collection *store.AuthCollection) func (*fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		return nil
+	}
+}
+
+// Unban refresh session
+func Unban(collection *store.AuthCollection) func (*fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		return nil
+	}
+}

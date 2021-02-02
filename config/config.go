@@ -16,12 +16,21 @@ type Authorization struct {
 
 //Database config
 type DBConfig struct {
-	Database string `yaml:"name"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
+	Database string      `yaml:"name"`
+	User     string      `yaml:"user"`
+	Password string      `yaml:"password"`
+	Address  string      `yaml:"address"`
+	Port     string      `yaml:"port"`
+	Schema   string      `yaml:"schema"`
+	Redis    RedisConfig `yaml:"redis"`
+}
+
+// Redis cache config
+type RedisConfig struct {
 	Address  string `yaml:"address"`
 	Port     string `yaml:"port"`
-	Schema   string `yaml:"schema"`
+	Password string `yaml:"password"`
+	Database int    `yaml:"database"`
 }
 
 // Config struct of application config

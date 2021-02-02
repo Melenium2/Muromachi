@@ -5,6 +5,7 @@ import (
 	"Muromachi/config"
 	"Muromachi/server"
 	"Muromachi/store"
+	"Muromachi/store/banrepo"
 	"Muromachi/store/entities"
 	"Muromachi/store/refreshrepo"
 	"Muromachi/store/sessions"
@@ -193,28 +194,18 @@ func TestAuthorize(t *testing.T) {
 
 	userRepo := userrepo.NewUserRepo(conn)
 	u := entities.User{
-		Company:      "123",
+		Company: "123",
 	}
 	_ = u.GenerateSecrets()
 	clientId, clientSecret := u.ClientId, u.ClientSecret
 	user, err := userRepo.Create(context.Background(), u)
 	assert.NoError(t, err)
 
-	sessionRepo := sessions.New(refreshrepo.New(conn), nil)
-	_, _ = sessionRepo.New(context.Background(), entities.Session{
-		UserId:       user.ID,
-		RefreshToken: "123",
-		UserAgent:    "",
-		Ip:           "",
-		ExpiresIn:    time.Now().AddDate(0, 0, 1),
-	})
-	_, _ = sessionRepo.New(context.Background(), entities.Session{
-		UserId:       user.ID,
-		RefreshToken: "321",
-		UserAgent:    "",
-		Ip:           "",
-		ExpiresIn:    time.Now().AddDate(0, 0, -1),
-	})
+	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
+	defer redisCleaner()
+	blacklist := banrepo.New(redisConn)
+
+	sessionRepo := sessions.New(refreshrepo.New(conn), blacklist)
 
 	sec := auth.NewSecurity(cfg.Auth, sessionRepo)
 	col := store.NewAuthCollection(conn)
@@ -224,14 +215,15 @@ func TestAuthorize(t *testing.T) {
 	app := fiber.New()
 	app.Post("/auth", handler)
 
-	var tt = []struct{
-		name string
-		request auth.JWTRequest
+	var tt = []struct {
+		name         string
+		inBlackList  bool
+		request      auth.JWTRequest
 		expectedCode int
 	}{
 		{
-			name:         "should return new access token",
-			request:      auth.JWTRequest{
+			name: "should return new access token",
+			request: auth.JWTRequest{
 				AccessType:   "simple",
 				ClientId:     clientId,
 				ClientSecret: clientSecret,
@@ -239,8 +231,8 @@ func TestAuthorize(t *testing.T) {
 			expectedCode: 200,
 		},
 		{
-			name:         "should return new access token with access type session",
-			request:      auth.JWTRequest{
+			name: "should return new access token with access type session",
+			request: auth.JWTRequest{
 				AccessType:   "session",
 				ClientId:     clientId,
 				ClientSecret: clientSecret,
@@ -248,8 +240,8 @@ func TestAuthorize(t *testing.T) {
 			expectedCode: 200,
 		},
 		{
-			name:         "should update refresh token",
-			request:      auth.JWTRequest{
+			name: "should update refresh token",
+			request: auth.JWTRequest{
 				AccessType:   "refresh_token",
 				ClientId:     clientId,
 				ClientSecret: clientSecret,
@@ -258,8 +250,8 @@ func TestAuthorize(t *testing.T) {
 			expectedCode: 200,
 		},
 		{
-			name:         "should return error if refresh token is expired",
-			request:      auth.JWTRequest{
+			name: "should return error if refresh token is expired",
+			request: auth.JWTRequest{
 				AccessType:   "refresh_token",
 				ClientId:     clientId,
 				ClientSecret: clientSecret,
@@ -268,41 +260,72 @@ func TestAuthorize(t *testing.T) {
 			expectedCode: 400,
 		},
 		{
-			name:         "should return error if client id not found",
-			request:      auth.JWTRequest{
+			name: "should return error if client id not found",
+			request: auth.JWTRequest{
 				AccessType:   "simple",
-				ClientId:     clientId+"123123123",
+				ClientId:     clientId + "123123123",
 				ClientSecret: clientSecret,
 			},
 			expectedCode: 404,
 		},
 		{
-			name:         "should return error if client secret not valid",
-			request:      auth.JWTRequest{
+			name: "should return error if client secret not valid",
+			request: auth.JWTRequest{
 				AccessType:   "simple",
 				ClientId:     clientId,
-				ClientSecret: clientSecret+"1",
+				ClientSecret: clientSecret + "1",
 			},
 			expectedCode: 401,
 		},
 		{
-			name:         "should return error if access type is wrong",
-			request:      auth.JWTRequest{
+			name: "should return error if access type is wrong",
+			request: auth.JWTRequest{
 				AccessType:   "wrong",
 				ClientId:     clientId,
 				ClientSecret: clientSecret,
 			},
 			expectedCode: 404,
 		},
+		{
+			name:        "should return error if refresh token in blacklist",
+			inBlackList: true,
+			request: auth.JWTRequest{
+				AccessType:   "refresh_token",
+				RefreshToken: "123",
+				ClientId:     clientId,
+				ClientSecret: clientSecret,
+			},
+			expectedCode: 400,
+		},
 	}
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
+			_, _ = sessionRepo.New(context.Background(), entities.Session{
+				UserId:       user.ID,
+				RefreshToken: "123",
+				UserAgent:    "",
+				Ip:           "",
+				ExpiresIn:    time.Now().AddDate(0, 0, 1),
+			})
+			_, _ = sessionRepo.New(context.Background(), entities.Session{
+				UserId:       user.ID,
+				RefreshToken: "321",
+				UserAgent:    "",
+				Ip:           "",
+				ExpiresIn:    time.Now().AddDate(0, 0, -1),
+			})
+			defer cleaner("refresh_sessions")
+
 			by, _ := json.Marshal(test.request)
 			b := bytes.NewReader(by)
 
 			req, _ := http.NewRequest("POST", "/auth", b)
 			req.Header.Set("Content-Type", "application/json")
+
+			if test.inBlackList {
+				_ = blacklist.Add(context.Background(), test.request.RefreshToken, "123", time.Hour)
+			}
 
 			resp, err := app.Test(req, 1000*60)
 			assert.NoError(t, err)
