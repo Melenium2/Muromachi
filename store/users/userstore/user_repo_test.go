@@ -1,9 +1,10 @@
-package userrepo_test
+package userstore_test
 
 import (
+	"Muromachi/config"
 	"Muromachi/store/entities"
 	"Muromachi/store/testhelpers"
-	user2 "Muromachi/store/userrepo"
+	user2 "Muromachi/store/users/userstore"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,10 @@ func TestUserRepo_Create_ShouldCreateNewUserAndPutItToDatabase_Mock(t *testing.T
 }
 
 func TestUserRepo_Create_ShouldCreateNewUserAndPutItToDatabase(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users")
 	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
@@ -67,7 +71,10 @@ func TestUserRepo_Create_ShouldReturnErrorBecauseUserHasNotClientIdAndSecret_Moc
 }
 
 func TestUserRepo_Create_ShouldReturnErrorBecauseUserHasNotClientIdAndSecret(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users")
 	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
@@ -99,7 +106,10 @@ func TestUserRepo_Create_ShouldReturnErrorIfCanNotCreateUser_Mock(t *testing.T) 
 }
 
 func TestUserRepo_Create_ShouldReturnErrorIfCanNotCreateUser(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users")
 	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
@@ -130,7 +140,10 @@ func TestUserRepo_Approve_ShouldGetUserFromDatabase_Mock(t *testing.T) {
 }
 
 func TestUserRepo_Approve_ShouldGetUserFromDatabase(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users")
 	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
@@ -165,7 +178,10 @@ func TestUserRepo_Approve_ShouldReturnErrorIfClientIdDoesNotExist_Mock(t *testin
 }
 
 func TestUserRepo_Approve_ShouldReturnErrorIfClientIdDoesNotExist(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
 	repo := user2.NewUserRepo(conn)
 	ctx := context.Background()
 

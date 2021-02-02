@@ -1,6 +1,8 @@
 package graph
 
-import "Muromachi/store"
+import (
+	"Muromachi/store/tracking"
+)
 
 //go:generate go run github.com/99designs/gqlgen
 
@@ -9,5 +11,5 @@ import "Muromachi/store"
 // It serves as dependency injection for your apprepo, add any dependencies you require here.
 
 type Resolver struct{
-	Tables *store.TableCollection
+	Tables *tracking.Tables
 }

@@ -1,4 +1,4 @@
-package trackepo_test
+package trackstore_test
 
 import (
 	"context"

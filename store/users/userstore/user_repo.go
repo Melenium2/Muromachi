@@ -1,4 +1,4 @@
-package userrepo
+package userstore
 
 import (
 	"Muromachi/store/connector"

@@ -1,4 +1,4 @@
-package userrepo_test
+package userstore_test
 
 import (
 	"Muromachi/store/entities"

@@ -1,21 +1,21 @@
 package sessions
 
 import (
-	"Muromachi/store/banrepo"
 	"Muromachi/store/entities"
-	"Muromachi/store/refreshrepo"
+	"Muromachi/store/users/sessions/blacklist"
+	"Muromachi/store/users/sessions/tokens"
 	"context"
 	"time"
 )
 
-type Sessions interface {
-	banrepo.BlackList
-	refreshrepo.RefreshSessions
+type Session interface {
+	blacklist.BlackList
+	tokens.RefreshSession
 }
 
 type sessionsImpl struct {
-	sessions  refreshrepo.RefreshSessions
-	blacklist banrepo.BlackList
+	sessions  tokens.RefreshSession
+	blacklist blacklist.BlackList
 }
 
 func (s sessionsImpl) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
@@ -46,7 +46,7 @@ func (s sessionsImpl) UserSessions(ctx context.Context, userId int) ([]entities.
 	return s.sessions.UserSessions(ctx, userId)
 }
 
-func New(sessions refreshrepo.RefreshSessions, blacklist banrepo.BlackList) *sessionsImpl {
+func New(sessions tokens.RefreshSession, blacklist blacklist.BlackList) *sessionsImpl {
 	return &sessionsImpl{
 		sessions:  sessions,
 		blacklist: blacklist,

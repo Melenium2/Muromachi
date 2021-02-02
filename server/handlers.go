@@ -4,14 +4,15 @@ import (
 	"Muromachi/auth"
 	"Muromachi/graph/generated"
 	"Muromachi/httpresp"
-	"Muromachi/store"
 	"Muromachi/store/entities"
+	"Muromachi/store/users"
+	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gofiber/fiber/v2"
 )
 
-func testground() func(ctx *fiber.Ctx) error {
+func Testground() func(ctx *fiber.Ctx) error {
 	play := playground.Handler("GraphQL playground", "/query")
 
 	return func(ctx *fiber.Ctx) error {
@@ -20,7 +21,7 @@ func testground() func(ctx *fiber.Ctx) error {
 	}
 }
 
-func graphql(resolver generated.ResolverRoot) func(ctx *fiber.Ctx) error {
+func Graphql(resolver generated.ResolverRoot) func(ctx *fiber.Ctx) error {
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
 			generated.Config{Resolvers: resolver},
@@ -34,7 +35,7 @@ func graphql(resolver generated.ResolverRoot) func(ctx *fiber.Ctx) error {
 }
 
 // Auth endpoint
-func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(*fiber.Ctx) error {
+func Authorize(sec auth.Defender, sessions *users.Tables) func(*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		var (
 			request auth.JWTRequest
@@ -42,6 +43,9 @@ func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(*fiber.Ct
 		// parse body as JWTRequest
 		if err := ctx.BodyParser(&request); err != nil {
 			return httpresp.Error(ctx, 404, err.Error())
+		}
+		if request.ClientId == "" || request.ClientSecret == "" {
+			return httpresp.Error(ctx, 404, fmt.Errorf("%s", "client id or client secret not provided"))
 		}
 		// CheckAndDel if user with this client id and secret exists
 		user, err := sessions.Users.Approve(ctx.Context(), request.ClientId)
@@ -89,7 +93,7 @@ func Authorize(sec auth.Defender, sessions *store.AuthCollection) func(*fiber.Ct
 }
 
 // Generate new company in system
-func NewCompany(sessions *store.AuthCollection) func(*fiber.Ctx) error {
+func NewCompany(sessions *users.Tables) func(*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		var err error
 		company := ctx.Query("c")
@@ -114,14 +118,14 @@ func NewCompany(sessions *store.AuthCollection) func(*fiber.Ctx) error {
 }
 
 // Ban refresh session
-func Ban(collection *store.AuthCollection) func (*fiber.Ctx) error {
+func Ban(collection *users.Tables) func (*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		return nil
 	}
 }
 
 // Unban refresh session
-func Unban(collection *store.AuthCollection) func (*fiber.Ctx) error {
+func Unban(collection *users.Tables) func (*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		return nil
 	}

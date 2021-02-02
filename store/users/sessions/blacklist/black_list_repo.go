@@ -1,4 +1,4 @@
-package banrepo
+package blacklist
 
 import (
 	"context"

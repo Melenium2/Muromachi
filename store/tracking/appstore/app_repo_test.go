@@ -1,9 +1,10 @@
-package apprepo_test
+package appstore_test
 
 import (
-	"Muromachi/store/apprepo"
+	"Muromachi/config"
 	"Muromachi/store/entities"
 	"Muromachi/store/testhelpers"
+	"Muromachi/store/tracking/appstore"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
@@ -12,9 +13,8 @@ import (
 )
 
 func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps_Mock(t *testing.T) {
-
 	conn := mockAppConnection{}
-	repo := apprepo.New(conn)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 10)
@@ -27,9 +27,11 @@ func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps_Mock(t *testing.T) {
 }
 
 func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking")
-	repo := apprepo.New(conn)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	app := entities.App{
@@ -55,7 +57,7 @@ func TestAppRepo_ByBundleId_ShouldReturnSliceOfApps(t *testing.T) {
 
 func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval_Mock(t *testing.T) {
 	conn := mockAppConnection{}
-	repo := apprepo.New(conn)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	timestamp, _ := time.Parse("2006-01-01", "2020-01-01")
@@ -76,8 +78,10 @@ func TestAppRepo_LastUpdates_ShouldReturnAllApplicationWithinGivenInterval_Mock(
 }
 
 func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseTheFuncNotAllowedInThisTable(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := apprepo.New(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.LastUpdates(ctx, 10, 10)
@@ -86,7 +90,7 @@ func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseTheFuncNotAllowedInThisTabl
 
 func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseThisTableHasNotInfo_Mock(t *testing.T) {
 	conn := mockAppConnection{}
-	repo := apprepo.New(conn)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.LastUpdates(ctx, 10, 1)
@@ -95,7 +99,7 @@ func TestAppRepo_LastUpdates_ShouldReturnErrorBecauseThisTableHasNotInfo_Mock(t 
 
 func TestAppRepo_ByBundleId_ShouldReturnErrNoRows_Mock(t *testing.T) {
 	conn := mockAppConnectionErrors{}
-	repo := apprepo.New(conn)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.ByBundleId(ctx, 10)
@@ -105,7 +109,7 @@ func TestAppRepo_ByBundleId_ShouldReturnErrNoRows_Mock(t *testing.T) {
 
 func TestAppRepo_ByBundleIdShouldReturnErrNoRows_Mock(t *testing.T) {
 	conn := mockAppConnectionErrors{}
-	repo := apprepo.New(conn)
+	repo := appstore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.TimeRange(ctx, 10, time.Now(), time.Now().AddDate(0, 0, 1))

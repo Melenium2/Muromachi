@@ -1,4 +1,4 @@
-package refreshrepo
+package tokens
 
 import (
 	"Muromachi/store/connector"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-type RefreshSessions interface {
+type RefreshSession interface {
 	New(ctx context.Context, session entities.Session) (entities.Session, error)
 	Get(ctx context.Context, token string) (entities.Session, error)
 	Remove(ctx context.Context, token string) (entities.Session, error)

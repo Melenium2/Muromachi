@@ -1,4 +1,4 @@
-package metarepo
+package metastore
 
 import (
 	"Muromachi/store/connector"
@@ -8,18 +8,18 @@ import (
 	"time"
 )
 
-type MetaRepo struct {
-	conn connector.Conn
+type Repo struct {
+	Conn connector.Conn
 }
 
-func (m *MetaRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
+func (m *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var (
 		meta entities.Meta
 		app  entities.App
 		apps []entities.DBO
 	)
 
-	_, err := m.conn.QueryFunc(
+	_, err := m.Conn.QueryFunc(
 		ctx,
 		sql,
 		append([]interface{}{pgx.QueryResultFormats{pgx.BinaryFormatCode}}, params...),
@@ -48,7 +48,7 @@ func (m *MetaRepo) ProducerFunc(ctx context.Context, sql string, params ...inter
 	return apps, nil
 }
 
-func (m *MetaRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
+func (m *Repo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return m.ProducerFunc(
 		ctx,
 		"select * from meta_tracking inner join app_tracking APP on bundleid = APP.id  where bundleid = $1",
@@ -56,7 +56,7 @@ func (m *MetaRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSl
 	)
 }
 
-func (m *MetaRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
+func (m *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return m.ProducerFunc(
 		ctx,
 		"select * from meta_tracking inner join app_tracking APP on bundleid = APP.id  where bundleid = $1 and date >= $2 and date <= $3",
@@ -64,16 +64,10 @@ func (m *MetaRepo) TimeRange(ctx context.Context, bundleId int, start, end time.
 	)
 }
 
-func (m *MetaRepo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
+func (m *Repo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
 	return m.ProducerFunc(
 		ctx,
 		"select * from meta_tracking META inner join app_tracking APP on bundleid = APP.id  where bundleid = $1 order by META.id desc limit $2",
 		bundleId, count,
 	)
-}
-
-func New(conn connector.Conn) *MetaRepo {
-	return &MetaRepo{
-		conn: conn,
-	}
 }

@@ -1,11 +1,12 @@
-package refreshrepo_test
+package tokens_test
 
 import (
+	"Muromachi/config"
 	"Muromachi/store/connector"
 	"Muromachi/store/entities"
-	"Muromachi/store/refreshrepo"
 	"Muromachi/store/testhelpers"
-	"Muromachi/store/userrepo"
+	"Muromachi/store/users/sessions/tokens"
+	"Muromachi/store/users/userstore"
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +15,13 @@ import (
 )
 
 func TestRefreshRepo_New(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../../config/dev.yml")
+	cfg.Database.Schema = "../../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users")
 
-	repo := userrepo.NewUserRepo(conn)
+	repo := userstore.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
@@ -63,7 +67,7 @@ func TestRefreshRepo_New(t *testing.T) {
 			if test.cleaner != nil {
 				defer cleaner("refresh_sessions")
 			}
-			repo := refreshrepo.New(test.conn)
+			repo := tokens.New(test.conn)
 			ctx := context.Background()
 			s := entities.Session{
 				UserId:       u.ID,
@@ -84,17 +88,20 @@ func TestRefreshRepo_New(t *testing.T) {
 }
 
 func TestRefreshRepo_Get(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../../config/dev.yml")
+	cfg.Database.Schema = "../../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
-	repo := userrepo.NewUserRepo(conn)
+	repo := userstore.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := refreshrepo.New(conn)
+	sesRepo := tokens.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -151,7 +158,7 @@ func TestRefreshRepo_Get(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := refreshrepo.New(test.conn)
+			repo := tokens.New(test.conn)
 			ctx := context.Background()
 
 			if test.doError {
@@ -165,17 +172,20 @@ func TestRefreshRepo_Get(t *testing.T) {
 }
 
 func TestRefreshRepo_Remove(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../../config/dev.yml")
+	cfg.Database.Schema = "../../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
-	repo := userrepo.NewUserRepo(conn)
+	repo := userstore.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := refreshrepo.New(conn)
+	sesRepo := tokens.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -225,7 +235,7 @@ func TestRefreshRepo_Remove(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := refreshrepo.New(test.conn)
+			repo := tokens.New(test.conn)
 			ctx := context.Background()
 
 			if test.doError {
@@ -239,17 +249,20 @@ func TestRefreshRepo_Remove(t *testing.T) {
 }
 
 func TestRefreshRepo_RemoveBatch(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../../config/dev.yml")
+	cfg.Database.Schema = "../../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
-	repo := userrepo.NewUserRepo(conn)
+	repo := userstore.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := refreshrepo.New(conn)
+	sesRepo := tokens.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -287,7 +300,7 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := refreshrepo.New(test.conn)
+			repo := tokens.New(test.conn)
 			ctx := context.Background()
 
 			err := repo.RemoveBatch(ctx, test.ids...)
@@ -297,17 +310,20 @@ func TestRefreshRepo_RemoveBatch(t *testing.T) {
 }
 
 func TestRefreshRepo_UserSessions(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../../config/dev.yml")
+	cfg.Database.Schema = "../../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
-	repo := userrepo.NewUserRepo(conn)
+	repo := userstore.NewUserRepo(conn)
 	user := entities.User{Company: "123"}
 	_ = user.GenerateSecrets()
 
 	u, err := repo.Create(context.Background(), user)
 	assert.NoError(t, err)
 
-	sesRepo := refreshrepo.New(conn)
+	sesRepo := tokens.New(conn)
 	session := entities.Session{
 		UserId:       u.ID,
 		RefreshToken: "123",
@@ -357,7 +373,7 @@ func TestRefreshRepo_UserSessions(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			repo := refreshrepo.New(test.conn)
+			repo := tokens.New(test.conn)
 			ctx := context.Background()
 
 			ses, err := repo.UserSessions(ctx, test.id)

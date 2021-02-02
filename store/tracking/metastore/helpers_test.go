@@ -1,4 +1,4 @@
-package metarepo_test
+package metastore_test
 
 import (
 	"Muromachi/store/entities"

@@ -1,9 +1,10 @@
-package trackepo_test
+package trackstore_test
 
 import (
+	"Muromachi/config"
 	"Muromachi/store/entities"
 	"Muromachi/store/testhelpers"
-	"Muromachi/store/trackepo"
+	"Muromachi/store/tracking/trackstore"
 	"context"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -12,7 +13,7 @@ import (
 
 func TestKeysRepo_ByBundleId_ShouldReturnApp_Mock(t *testing.T) {
 	conn := mockTrackConnection{}
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 123)
@@ -26,9 +27,12 @@ func TestKeysRepo_ByBundleId_ShouldReturnApp_Mock(t *testing.T) {
 }
 
 func TestKeysRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking", "keyword_tracking")
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	bundleId, _ := testhelpers.AddNewApp(conn, ctx, entities.App{Bundle: "123"})
@@ -50,7 +54,7 @@ func TestKeysRepo_ByBundleId_ShouldReturnApp(t *testing.T) {
 
 func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
 	conn := mockTrackConnection{}
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	t1, _ := time.Parse("2006-01-02", "2021-01-18")
@@ -69,9 +73,12 @@ func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange_Mock(t *testing.T) {
 }
 
 func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking", "keyword_tracking")
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	bundleId, _ := testhelpers.AddNewApp(conn, ctx, entities.App{Bundle: "123"})
@@ -98,7 +105,7 @@ func TestKeysRepo_TimeRange_ShouldReturnAppsInTimeRange(t *testing.T) {
 
 func TestKeysRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 	conn := mockTrackConnection{}
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 123, 4)
@@ -108,9 +115,12 @@ func TestKeysRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 }
 
 func TestKeysRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking", "keyword_tracking")
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	bundleId, _ := testhelpers.AddNewApp(conn, ctx, entities.App{Bundle: "123"})
@@ -137,7 +147,7 @@ func TestKeysRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 
 func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockTrackConnectionErrors{}
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.ByBundleId(ctx, 123)
@@ -145,8 +155,11 @@ func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := trackepo.NewKeys(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 1)
@@ -156,7 +169,7 @@ func TestKeysRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
 
 func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockTrackConnectionErrors{}
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.TimeRange(ctx, 123, time.Now(), time.Now())
@@ -164,8 +177,11 @@ func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRow(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := trackepo.NewKeys(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.TimeRange(ctx, 1, time.Now(), time.Now())
@@ -175,7 +191,7 @@ func TestKeysRepo_TimeRange_ShouldReturnErrorIfNoRow(t *testing.T) {
 
 func TestKeysRepo_LastUpdates_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockTrackConnectionErrors{}
-	repo := trackepo.NewKeys(conn)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	_, err := repo.LastUpdates(ctx, 123, 1)
@@ -184,8 +200,11 @@ func TestKeysRepo_LastUpdates_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 
 
 func TestKeysRepo_LastUpdates_ShouldReturnErrorIfNoRow(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := trackepo.NewKeys(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := trackstore.KeysRepo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 1, 2)

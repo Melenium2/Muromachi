@@ -3,12 +3,12 @@ package auth_test
 import (
 	"Muromachi/auth"
 	"Muromachi/config"
-	"Muromachi/store/banrepo"
 	"Muromachi/store/entities"
-	"Muromachi/store/refreshrepo"
-	"Muromachi/store/sessions"
 	"Muromachi/store/testhelpers"
-	"Muromachi/store/userrepo"
+	"Muromachi/store/users/sessions"
+	"Muromachi/store/users/sessions/blacklist"
+	"Muromachi/store/users/sessions/tokens"
+	"Muromachi/store/users/userstore"
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -28,7 +28,7 @@ func TestSecurity_StartSession_Mock(t *testing.T) {
 
 	var tt = []struct {
 		name          string
-		session       sessions.Sessions
+		session       sessions.Session
 		refreshToken  string
 		passUserCtx   bool
 		expectedError bool
@@ -110,14 +110,14 @@ func TestSecurity_StartSession_ShouldCreateNewRefreshSession(t *testing.T) {
 	conn, cleaner := testhelpers.RealDb(dbcfg)
 	defer cleaner("refresh_sessions", "users")
 
-	sess := refreshrepo.New(conn)
+	sess := tokens.New(conn)
 	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
 	u := entities.User{
 		Company: "123",
 	}
 	_ = u.GenerateSecrets()
-	user, _ := userrepo.NewUserRepo(conn).Create(context.Background(), u)
+	user, _ := userstore.NewUserRepo(conn).Create(context.Background(), u)
 
 	// FIX
 	// Bad solution. But i have troubles with fasthttp context.
@@ -152,7 +152,7 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionNotFound(t *test
 	conn, cleaner := testhelpers.RealDb(dbcfg)
 	defer cleaner("refresh_sessions")
 
-	sess := refreshrepo.New(conn)
+	sess := tokens.New(conn)
 	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
 	// FIX
@@ -188,9 +188,9 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionIsExpired(t *tes
 		Company: "123",
 	}
 	_ = u.GenerateSecrets()
-	user, _ := userrepo.NewUserRepo(conn).Create(context.Background(), u)
+	user, _ := userstore.NewUserRepo(conn).Create(context.Background(), u)
 
-	sess := refreshrepo.New(conn)
+	sess := tokens.New(conn)
 	_, _ = sess.New(context.Background(), entities.Session{
 		UserId:       user.ID,
 		RefreshToken: "123",
@@ -234,9 +234,9 @@ func TestSecurity_StartSession_ShouldReturnErrorIfSessionInBlackList(t *testing.
 		Company: "123",
 	}
 	_ = u.GenerateSecrets()
-	user, _ := userrepo.NewUserRepo(conn).Create(context.Background(), u)
+	user, _ := userstore.NewUserRepo(conn).Create(context.Background(), u)
 
-	sess := refreshrepo.New(conn)
+	sess := tokens.New(conn)
 	_, _ = sess.New(context.Background(), entities.Session{
 		UserId:       user.ID,
 		RefreshToken: "123",
@@ -248,7 +248,7 @@ func TestSecurity_StartSession_ShouldReturnErrorIfSessionInBlackList(t *testing.
 	redisConn, redisCleaner := testhelpers.RedisDb(dbcfg.Database.Redis)
 	defer redisCleaner()
 
-	balcklist := banrepo.New(redisConn)
+	balcklist := blacklist.New(redisConn)
 	assert.NoError(t, balcklist.Add(context.Background(), "123", 1, time.Hour))
 
 	security := auth.NewSecurity(cfg, sessions.New(sess, balcklist))
@@ -292,9 +292,9 @@ func TestSecurity_StartSession_ShouldRemoveAllUserSessionsIfLenIsMoreThen5AndRet
 		Company: "123",
 	}
 	_ = u.GenerateSecrets()
-	user, _ := userrepo.NewUserRepo(conn).Create(context.Background(), u)
+	user, _ := userstore.NewUserRepo(conn).Create(context.Background(), u)
 
-	sess := refreshrepo.New(conn)
+	sess := tokens.New(conn)
 	for i := 0; i < 7; i++ {
 		_, _ = sess.New(context.Background(), entities.Session{
 			UserId:       user.ID,

@@ -4,10 +4,12 @@ import (
 	"Muromachi/auth"
 	"Muromachi/config"
 	"Muromachi/graph"
-	"Muromachi/store"
 	"Muromachi/store/connector"
-	"Muromachi/store/refreshrepo"
-	"Muromachi/store/sessions"
+	tracking2 "Muromachi/store/tracking"
+	"Muromachi/store/users"
+	"Muromachi/store/users/sessions"
+	"Muromachi/store/users/sessions/tokens"
+	"Muromachi/store/users/userstore"
 	"Muromachi/utils"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -26,18 +28,18 @@ type Server struct {
 	// Graphql resolver
 	resolver *graph.Resolver
 	// Pointer to auth table collection
-	sessions *store.AuthCollection
+	sessions *users.Tables
 	// Pointer to tracking tables collection
-	tracking *store.TableCollection
+	tracking *tracking2.Tables
 }
 
 // Init routes and apply middleware
 func (s *Server) initRoutes() {
 	//Graphql playground
-	s.app.All("/playground", testground())
+	s.app.All("/playground", Testground())
 	// GraphQL Group
 	ql := s.app.Group("/ql", auth.ApplyAuthMiddleware(s.security))
-	ql.All("/query", graphql(s.resolver))
+	ql.All("/query", Graphql(s.resolver))
 
 	// Rest
 	// Auth
@@ -59,12 +61,15 @@ func (s *Server) Shutdown() error {
 
 func New(port string, config config.Config) *Server {
 	// Init postgres
-	conn, err := connector.EstablishConnection(config.Database)
+	conn, err := connector.EstablishPostgresConnection(config.Database)
 	if err != nil {
 		log.Fatal(err)
 	}
 	// Pointer to table collection
-	tables := store.NewTrackingCollection(conn)
+	tables := tracking2.NewTrackingTables(conn)
+	// TODO прокинуть black list и редис коннект
+	// Interface of sessions
+	session := sessions.New(tokens.New(conn), nil)
 
 	server := &Server{
 		app:    fiber.New(),
@@ -72,9 +77,9 @@ func New(port string, config config.Config) *Server {
 		config: config,
 		security: auth.NewSecurity(
 			config.Auth,
-			sessions.New(refreshrepo.New(conn), nil),
+			session,
 		),
-		sessions: store.NewAuthCollection(conn),
+		sessions: users.NewAuthTables(session, userstore.NewUserRepo(conn)),
 		tracking: tables,
 		resolver: &graph.Resolver{
 			Tables: tables,

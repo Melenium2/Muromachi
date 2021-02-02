@@ -12,7 +12,7 @@ type Track struct {
 	Type     string    `json:"type,omitempty"`
 	Date     time.Time `json:"date,omitempty"`
 	Place    int32     `json:"place,omitempty"`
-	App      App       `json:"apprepo,omitempty"`
+	App      App       `json:"app,omitempty"`
 }
 
 func (tr Track) To(to interface{}) error {

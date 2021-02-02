@@ -4,13 +4,13 @@ import (
 	"Muromachi/auth"
 	"Muromachi/config"
 	"Muromachi/server"
-	"Muromachi/store"
-	"Muromachi/store/banrepo"
 	"Muromachi/store/entities"
-	"Muromachi/store/refreshrepo"
-	"Muromachi/store/sessions"
 	"Muromachi/store/testhelpers"
-	"Muromachi/store/userrepo"
+	"Muromachi/store/users"
+	"Muromachi/store/users/sessions"
+	"Muromachi/store/users/sessions/blacklist"
+	"Muromachi/store/users/sessions/tokens"
+	"Muromachi/store/users/userstore"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -33,7 +33,7 @@ func TestAuthorize_Mock(t *testing.T) {
 	}
 
 	sec := auth.NewSecurity(cfg, mockSession{})
-	col := store.NewAuthCollection(mockConn{})
+	col := users.NewAuthTables(mockSession{}, userstore.NewUserRepo(mockConn{}))
 
 	handler := server.Authorize(sec, col)
 
@@ -157,7 +157,7 @@ func TestAuthorize_WithWrongRequestDataType(t *testing.T) {
 	}
 
 	sec := auth.NewSecurity(cfg, mockSession{})
-	col := store.NewAuthCollection(mockConn{})
+	col := users.NewAuthTables(mockSession{}, userstore.NewUserRepo(mockConn{}))
 
 	handler := server.Authorize(sec, col)
 
@@ -192,7 +192,7 @@ func TestAuthorize(t *testing.T) {
 		JwtIss:     "apptwice.com",
 	}
 
-	userRepo := userrepo.NewUserRepo(conn)
+	userRepo := userstore.NewUserRepo(conn)
 	u := entities.User{
 		Company: "123",
 	}
@@ -203,12 +203,12 @@ func TestAuthorize(t *testing.T) {
 
 	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
 	defer redisCleaner()
-	blacklist := banrepo.New(redisConn)
+	blacklist := blacklist.New(redisConn)
 
-	sessionRepo := sessions.New(refreshrepo.New(conn), blacklist)
+	sessionRepo := sessions.New(tokens.New(conn), blacklist)
 
 	sec := auth.NewSecurity(cfg.Auth, sessionRepo)
-	col := store.NewAuthCollection(conn)
+	col := users.NewAuthTables(sessionRepo, userRepo)
 
 	handler := server.Authorize(sec, col)
 

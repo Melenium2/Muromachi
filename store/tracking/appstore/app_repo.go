@@ -1,4 +1,4 @@
-package apprepo
+package appstore
 
 import (
 	"Muromachi/store/connector"
@@ -10,14 +10,14 @@ import (
 )
 
 type Repo struct {
-	conn connector.Conn
+	Conn connector.Conn
 }
 
 func (a *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var app entities.App
 	var apps []entities.DBO
 
-	_, err := a.conn.QueryFunc(
+	_, err := a.Conn.QueryFunc(
 		ctx,
 		sql,
 		params,
@@ -58,10 +58,4 @@ func (a *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time
 
 func (a *Repo) LastUpdates(_ context.Context, _, _ int) (entities.DboSlice, error) {
 	return nil, fmt.Errorf("%s", "no last updates in this table")
-}
-
-func New(conn connector.Conn) *Repo {
-	return &Repo{
-		conn: conn,
-	}
 }

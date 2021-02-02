@@ -1,9 +1,10 @@
-package metarepo_test
+package metastore_test
 
 import (
+	"Muromachi/config"
 	"Muromachi/store/entities"
-	"Muromachi/store/metarepo"
 	"Muromachi/store/testhelpers"
+	"Muromachi/store/tracking/metastore"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
@@ -13,7 +14,7 @@ import (
 
 func TestMetaRepo_ByBundleId_ShouldReturnSomeApps_Mock(t *testing.T) {
 	conn := mockMetaConnection{}
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 12)
@@ -31,9 +32,12 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_ByBundleId_ShouldReturnSomeApps(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking, meta_tracking")
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	bundleId, err := testhelpers.AddNewApp(conn, ctx, entities.App{
@@ -61,7 +65,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps(t *testing.T) {
 
 func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange_Mock(t *testing.T) {
 	conn := mockMetaConnection{}
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	t1, _ := time.Parse("2006-01-02", "2021-01-18")
@@ -80,9 +84,12 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange_Mock(t *testing.T
 }
 
 func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking, meta_tracking")
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	bundleId, err := testhelpers.AddNewApp(conn, ctx, entities.App{
@@ -112,7 +119,7 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
 
 func TestMetaRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 	conn := mockMetaConnection{}
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 12, 3)
@@ -122,9 +129,12 @@ func TestMetaRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
-	conn, cleaner := testhelpers.RealDb()
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("app_tracking, meta_tracking")
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	bundleId, err := testhelpers.AddNewApp(conn, ctx, entities.App{
@@ -156,7 +166,7 @@ func TestMetaRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 
 func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockMetaConnectionErrors{}
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 12)
@@ -166,8 +176,11 @@ func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := metarepo.New(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 12)
@@ -178,7 +191,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
 
 func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockMetaConnectionErrors{}
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.TimeRange(ctx, 12, time.Now(), time.Now())
@@ -188,8 +201,11 @@ func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := metarepo.New(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.TimeRange(ctx, 12, time.Now(), time.Now())
@@ -200,7 +216,7 @@ func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows(t *testing.T) {
 
 func TestMetaRepo_LastUpdate_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockMetaConnectionErrors{}
-	repo := metarepo.New(conn)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 12, 1)
@@ -210,8 +226,11 @@ func TestMetaRepo_LastUpdate_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_LastUpdate_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := testhelpers.RealDb()
-	repo := metarepo.New(conn)
+	cfg := config.New("../../../config/dev.yml")
+	cfg.Database.Schema = "../../../config/schema.sql"
+
+	conn, _ := testhelpers.RealDb(cfg.Database)
+	repo := metastore.Repo{Conn: conn}
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 12, 1)

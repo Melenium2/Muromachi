@@ -3,7 +3,7 @@ package auth
 import (
 	"Muromachi/config"
 	"Muromachi/store/entities"
-	"Muromachi/store/sessions"
+	"Muromachi/store/users/sessions"
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -20,18 +20,10 @@ var (
 	}
 )
 
-type Defender interface {
-	StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error)
-	IsSessionBanned(ctx context.Context, refreshToken string) bool
-	BanSessions(ctx context.Context, tokens ...entities.Session) error
-	SignAccessToken(ctx *fiber.Ctx, refreshToken string) (JWTResponse, error)
-	ValidateJwt(accessToken string) (*Claims, error)
-}
-
 type Security struct {
 	config    config.Authorization
 	generator *securityGenerator
-	sessions  sessions.Sessions
+	sessions  sessions.Session
 }
 
 func (security *Security) ApplyRequestIdMiddleware(c *fiber.Ctx) error {
@@ -160,12 +152,4 @@ func (security *Security) SignAccessToken(ctx *fiber.Ctx, refreshToken string) (
 
 func (security *Security) ValidateJwt(token string) (*Claims, error) {
 	return security.generator.ValidateJwt(token)
-}
-
-func NewSecurity(config config.Authorization, sessions sessions.Sessions) *Security {
-	return &Security{
-		config:    config,
-		generator: newSecurityGen(config),
-		sessions:  sessions,
-	}
 }

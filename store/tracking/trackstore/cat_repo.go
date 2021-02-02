@@ -1,4 +1,4 @@
-package trackepo
+package trackstore
 
 import (
 	"Muromachi/store/connector"
@@ -9,7 +9,7 @@ import (
 )
 
 type CatRepo struct {
-	conn connector.Conn
+	Conn connector.Conn
 }
 
 func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
@@ -17,7 +17,7 @@ func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 	var app entities.App
 	var keys []entities.DBO
 
-	_, err := c.conn.QueryFunc(
+	_, err := c.Conn.QueryFunc(
 		ctx,
 		sql,
 		params,
@@ -64,12 +64,6 @@ func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (entitie
 		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id where CAT.bundleid = $1 order by CAT.id desc limit $2",
 		bundleId, count,
 	)
-}
-
-func NewCat(conn connector.Conn) *CatRepo {
-	return &CatRepo{
-		conn: conn,
-	}
 }
 
 

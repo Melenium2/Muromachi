@@ -1,4 +1,4 @@
-package refreshrepo_test
+package tokens_test
 
 import (
 	"context"

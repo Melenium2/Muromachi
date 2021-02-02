@@ -30,7 +30,7 @@ type Meta struct {
 	DeveloperContacts DeveloperContacts `json:"developerContacts" db:"developer_contacts"`
 	PrivacyPolicy     string            `json:"privacyPolicy,omitempty"`
 	Date              time.Time         `json:"date,omitempty"`
-	App               App               `json:"apprepo,omitempty"`
+	App               App               `json:"app,omitempty"`
 }
 
 func (m Meta) To(to interface{}) error {

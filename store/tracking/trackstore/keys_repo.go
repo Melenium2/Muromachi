@@ -1,4 +1,4 @@
-package trackepo
+package trackstore
 
 import (
 	"Muromachi/store/connector"
@@ -9,7 +9,7 @@ import (
 )
 
 type KeysRepo struct {
-	conn connector.Conn
+	Conn connector.Conn
 }
 
 func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
@@ -19,7 +19,7 @@ func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...inter
 		keys []entities.DBO
 	)
 
-	_, err := k.conn.QueryFunc(
+	_, err := k.Conn.QueryFunc(
 		ctx,
 		sql,
 		params,
@@ -66,10 +66,4 @@ func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) (entiti
 		"select * from keyword_tracking KEY inner join app_tracking APP on KEY.bundleid = APP.id where KEY.bundleid = $1 order by KEY.id desc limit $2",
 		bundleId, count,
 	)
-}
-
-func NewKeys(conn connector.Conn) *KeysRepo {
-	return &KeysRepo{
-		conn: conn,
-	}
 }

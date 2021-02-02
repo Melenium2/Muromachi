@@ -1,4 +1,4 @@
-package apprepo_test
+package appstore_test
 
 import (
 	"context"

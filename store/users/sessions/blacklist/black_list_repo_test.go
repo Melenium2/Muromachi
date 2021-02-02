@@ -1,8 +1,9 @@
-package banrepo_test
+package blacklist_test
 
 import (
-	"Muromachi/store/banrepo"
+	"Muromachi/config"
 	"Muromachi/store/testhelpers"
+	"Muromachi/store/users/sessions/blacklist"
 	"Muromachi/utils"
 	"context"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 
 func TestBlackList_Add_Mock(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	repo := banrepo.New(db)
+	repo := blacklist.New(db)
 	ctx := context.Background()
 
 	hash := utils.Hash("123", "123")
@@ -23,9 +24,11 @@ func TestBlackList_Add_Mock(t *testing.T) {
 }
 
 func TestBlackList_Add(t *testing.T) {
-	conn, cleaner := testhelpers.RedisDb()
+	cfg := config.New("../../../../config/dev.yml")
+
+	conn, cleaner := testhelpers.RedisDb(cfg.Database.Redis)
 	defer cleaner()
-	repo := banrepo.New(conn)
+	repo := blacklist.New(conn)
 	ctx := context.Background()
 
 	var tt = []struct {
@@ -73,7 +76,7 @@ func TestBlackList_Add(t *testing.T) {
 
 func TestBlackList_CheckIfExist_Mock_ShouldGetValue(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	repo := banrepo.New(db)
+	repo := blacklist.New(db)
 	ctx := context.Background()
 
 	hash := utils.Hash("123", "123")
@@ -84,7 +87,7 @@ func TestBlackList_CheckIfExist_Mock_ShouldGetValue(t *testing.T) {
 
 func TestBlackList_CheckIfExist_Mock_ShouldReturnNil(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	repo := banrepo.New(db)
+	repo := blacklist.New(db)
 	ctx := context.Background()
 
 	hash := utils.Hash("123", "123")
@@ -95,7 +98,7 @@ func TestBlackList_CheckIfExist_Mock_ShouldReturnNil(t *testing.T) {
 
 func TestBlackList_CheckIfExist_Mock_ShouldReturnUnexpectedError(t *testing.T) {
 	db, mock := redismock.NewClientMock()
-	repo := banrepo.New(db)
+	repo := blacklist.New(db)
 	ctx := context.Background()
 
 	hash := utils.Hash("123", "123")
@@ -105,9 +108,11 @@ func TestBlackList_CheckIfExist_Mock_ShouldReturnUnexpectedError(t *testing.T) {
 }
 
 func TestBlackList_CheckIfExist(t *testing.T) {
-	conn, cleaner := testhelpers.RedisDb()
+	cfg := config.New("../../../../config/dev.yml")
+
+	conn, cleaner := testhelpers.RedisDb(cfg.Database.Redis)
 	defer cleaner()
-	repo := banrepo.New(conn)
+	repo := blacklist.New(conn)
 	ctx := context.Background()
 
 	hash := utils.Hash("123", "123")
