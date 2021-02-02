@@ -6,6 +6,7 @@ import (
 	"Muromachi/store/entities"
 	"context"
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"strings"
@@ -156,6 +157,26 @@ func TrackStruct(bundleId int, t string) entities.Track {
 		Type:     t,
 		Date:     t1,
 		Place:    19,
+	}
+}
+
+func RedisDb(c ...config.RedisConfig) (*redis.Client, func()) {
+	var cfg config.RedisConfig
+	if len(c) > 0 {
+		cfg = c[0]
+	}
+	cfg = config.New("../../config/dev.yml").Database.Redis
+
+	client := redis.NewClient(&redis.Options{
+		Addr:               fmt.Sprintf("%s:%s", cfg.Address, cfg.Port),
+		Password:           cfg.Password,
+	})
+
+	return client, func() {
+		err := client.FlushDB(context.Background()).Err()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 

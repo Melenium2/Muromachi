@@ -9,7 +9,7 @@ import (
 func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		var token string
-		// Check if token  in cookie
+		// CheckAndDel if token  in cookie
 		cookieToken := c.Cookies(SecurityCookieName, "")
 		if cookieToken == "" {
 			// if not in cookie then check headers
@@ -31,7 +31,7 @@ func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 			return httpresp.Error(c, 401, ErrNotAuthenticated)
 		}
 
-		// Check if refresh token is banned in redis
+		// CheckAndDel if refresh token is banned in redis
 		// TODO Сделать Redis
 		if security.IsSessionBanned(claims.Id) {
 			return httpresp.Error(c, 401, ErrNotAuthenticated)

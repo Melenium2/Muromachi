@@ -5,3 +5,12 @@ database:
   address: localhost
   port: 5432
   schema: ../../config/schema.sql
+  redis:
+    address: 192.168.99.100
+    port: 6379
+    password:
+    database:
+auth:
+  jwt_salt: 375a8391bc788d49ab05f8dd909be1b7
+  jwt_expires: 24h
+  jwt_iss: apptwice.com
