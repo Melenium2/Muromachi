@@ -1,8 +1,19 @@
 package httpresp
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"fmt"
+	"github.com/gofiber/fiber/v2"
+)
 
 func Error(ctx *fiber.Ctx, status int, resp interface{}) error {
 	ctx.Status(status)
-	return ctx.JSON(resp)
+	switch v := resp.(type) {
+	case error, string:
+		return ctx.JSON(map[string]interface{}{
+			"error": fmt.Sprintf("%v", v),
+			"status": status,
+		})
+	default:
+		return ctx.JSON(resp)
+	}
 }

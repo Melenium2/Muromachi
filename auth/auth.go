@@ -1,4 +1,4 @@
-package authorization
+package auth
 
 import (
 	"Muromachi/config"
@@ -127,7 +127,7 @@ func (security *Security) SignAccessToken(ctx *fiber.Ctx, refreshToken string) (
 		return JWTResponse{}, ErrEmptyContext
 	}
 	jwt.TokenType = "Bearer"
-	jwt.ExpiresIn = time.Duration(security.config.JwtExpires.Seconds())
+	jwt.ExpiresIn = int(security.config.JwtExpires)
 	// If withSession additionally create an refresh session
 	if refreshToken != "" {
 		jwt.RefreshToken = refreshToken

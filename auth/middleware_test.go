@@ -1,7 +1,7 @@
-package authorization_test
+package auth_test
 
 import (
-	"Muromachi/authorization"
+	"Muromachi/auth"
 	"Muromachi/config"
 	"Muromachi/utils"
 	"fmt"
@@ -23,8 +23,8 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 		JwtIss:     "auth.apptwice.com",
 		JwtAud:     "",
 	}
-	defender := authorization.NewSecurity(cfg, mockSession{})
-	app.Use("/", authorization.ApplyAuthMiddleware(defender))
+	defender := auth.NewSecurity(cfg, mockSession{})
+	app.Use("/", auth.ApplyAuthMiddleware(defender))
 	app.Get("/test", func(ctx *fiber.Ctx) error {
 		s, _ := mockSession{}.Get(ctx.Context(), "123")
 		return ctx.JSON(s)
@@ -79,7 +79,7 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 				localTime = localTime.Add(time.Hour * -24)
 			}
 			rtoken, _ := utils.UUID()
-			jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &authorization.Claims{
+			jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &auth.Claims{
 				StandardClaims: &jwt.StandardClaims{
 					Audience:  cfg.JwtAud,
 					ExpiresAt: localTime.Unix(),
@@ -87,7 +87,7 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 					Issuer:    cfg.JwtIss,
 					Id:        rtoken,
 				},
-				UserClaims: &authorization.UserClaims{
+				UserClaims: &auth.UserClaims{
 					ID:   123,
 					Role: "user",
 				},
@@ -104,7 +104,7 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 			}
 			if test.withCookieJwt {
 				req.AddCookie(&http.Cookie{
-					Name:       authorization.SecurityCookieName,
+					Name:       auth.SecurityCookieName,
 					Value:      token,
 					Path:       "/",
 					RawExpires: "",

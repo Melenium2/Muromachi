@@ -1,7 +1,7 @@
-package authorization_test
+package auth_test
 
 import (
-	"Muromachi/authorization"
+	"Muromachi/auth"
 	"Muromachi/config"
 	"Muromachi/store/entities"
 	"Muromachi/store/refreshrepo"
@@ -71,13 +71,13 @@ func TestSecurity_StartSession_Mock(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			security := authorization.NewSecurity(cfg, test.session)
+			security := auth.NewSecurity(cfg, test.session)
 			app := fiber.New()
 			fastCtx := &fasthttp.RequestCtx{}
 			ctx := app.AcquireCtx(fastCtx)
 
 			if test.passUserCtx {
-				ctx.Locals("request_user", &authorization.UserClaims{
+				ctx.Locals("request_user", &auth.UserClaims{
 					ID:   123,
 					Role: "user",
 				})
@@ -103,7 +103,7 @@ func TestSecurity_StartSession_ShouldCreateNewRefreshSession(t *testing.T) {
 	defer cleaner("refresh_sessions", "users")
 
 	sess := refreshrepo.New(conn)
-	security := authorization.NewSecurity(cfg, sessions.New(sess, nil))
+	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
 	u := entities.User{
 		Company: "123",
@@ -117,7 +117,7 @@ func TestSecurity_StartSession_ShouldCreateNewRefreshSession(t *testing.T) {
 	// Or need emulate working fasthttp ctx.
 	app := fiber.New()
 	app.Get("/", func(ctx *fiber.Ctx) error {
-		ctx.Locals("request_user", &authorization.UserClaims{
+		ctx.Locals("request_user", &auth.UserClaims{
 			ID:   int64(user.ID),
 			Role: "user",
 		})
@@ -145,7 +145,7 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionNotFound(t *test
 	defer cleaner("refresh_sessions")
 
 	sess := refreshrepo.New(conn)
-	security := authorization.NewSecurity(cfg, sessions.New(sess, nil))
+	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
 	// FIX
 	// Bad solution. But i have troubles with fasthttp context.
@@ -191,7 +191,7 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionIsExpired(t *tes
 		ExpiresIn:    time.Now().Add(time.Hour * -24),
 	})
 
-	security := authorization.NewSecurity(cfg, sessions.New(sess, nil))
+	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
 	// FIX
 	// Bad solution. But i have troubles with fasthttp context.
@@ -212,7 +212,7 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionIsExpired(t *tes
 }
 
 func TestSecurity_StartSession_ShouldReturnErrorIfRefreshTokenNotProvidedAndContextValuesEmpty(t *testing.T) {
-	security := authorization.NewSecurity(config.Authorization{}, sessions.New(nil, nil))
+	security := auth.NewSecurity(config.Authorization{}, sessions.New(nil, nil))
 	app := fiber.New()
 	fastCtx := &fasthttp.RequestCtx{}
 	ctx := app.AcquireCtx(fastCtx)
@@ -249,7 +249,7 @@ func TestSecurity_StartSession_ShouldRemoveAllUserSessionsIfLenIsMoreThen5AndRet
 		})
 	}
 
-	security := authorization.NewSecurity(cfg, sessions.New(sess, nil))
+	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
 	// FIX
 	// Bad solution. But i have troubles with fasthttp context.
@@ -257,7 +257,7 @@ func TestSecurity_StartSession_ShouldRemoveAllUserSessionsIfLenIsMoreThen5AndRet
 	// Or need to simulate working fasthttp ctx.
 	app := fiber.New()
 	app.Get("/", func(ctx *fiber.Ctx) error {
-		ctx.Locals("request_user", &authorization.UserClaims{
+		ctx.Locals("request_user", &auth.UserClaims{
 			ID:   int64(user.ID),
 			Role: "user",
 		})
@@ -303,14 +303,14 @@ func TestSecurity_SignAccessToken(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
-			security := authorization.NewSecurity(cfg, nil)
+			security := auth.NewSecurity(cfg, nil)
 
 			app := fiber.New()
 			fastCtx := &fasthttp.RequestCtx{}
 			ctx := app.AcquireCtx(fastCtx)
 
 			if test.withUserCtx {
-				ctx.Locals("request_user", &authorization.UserClaims{
+				ctx.Locals("request_user", &auth.UserClaims{
 					ID:   123,
 					Role: "user",
 				})

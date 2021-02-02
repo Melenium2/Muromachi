@@ -14,7 +14,7 @@ type TableCollection struct {
 	Keys TrackingRepo
 }
 
-func New(conn connector.Conn) *TableCollection {
+func NewTrackingCollection(conn connector.Conn) *TableCollection {
 	return &TableCollection{
 		App:  apprepo.New(conn),
 		Meta: metarepo.New(conn),

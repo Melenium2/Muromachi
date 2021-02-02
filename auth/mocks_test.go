@@ -1,4 +1,4 @@
-package authorization_test
+package auth_test
 
 import (
 	"Muromachi/store/entities"
