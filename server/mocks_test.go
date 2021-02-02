@@ -11,10 +11,12 @@ import (
 type mockSession struct {
 }
 
-func (m mockSession) AddBlock() {
+func (m mockSession) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
 }
 
-func (m mockSession) CheckBlock() {
+func (m mockSession) CheckIfExist(ctx context.Context, key string) error {
+	return nil
 }
 
 func (m mockSession) New(ctx context.Context, session entities.Session) (entities.Session, error) {
