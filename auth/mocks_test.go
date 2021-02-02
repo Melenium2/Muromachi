@@ -3,6 +3,7 @@ package auth_test
 import (
 	"Muromachi/store/entities"
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
@@ -10,10 +11,12 @@ import (
 type mockSession struct {
 }
 
-func (m mockSession) AddBlock() {
+func (m mockSession) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
 }
 
-func (m mockSession) CheckBlock() {
+func (m mockSession) CheckIfExist(ctx context.Context, key string) error {
+	return fmt.Errorf("%s", "key not found")
 }
 
 func (m mockSession) New(ctx context.Context, session entities.Session) (entities.Session, error) {
@@ -66,12 +69,12 @@ func (m mockSession) UserSessions(ctx context.Context, userId int) ([]entities.S
 type mockSessionRemoveNoRows struct {
 }
 
-func (m mockSessionRemoveNoRows) AddBlock() {
-	panic("implement me")
+func (m mockSessionRemoveNoRows) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
 }
 
-func (m mockSessionRemoveNoRows) CheckBlock() {
-	panic("implement me")
+func (m mockSessionRemoveNoRows) CheckIfExist(ctx context.Context, key string) error {
+	return nil
 }
 
 func (m mockSessionRemoveNoRows) New(ctx context.Context, session entities.Session) (entities.Session, error) {
@@ -97,12 +100,12 @@ func (m mockSessionRemoveNoRows) UserSessions(ctx context.Context, userId int) (
 type mockSessionRemoveExpiredSession struct {
 }
 
-func (m mockSessionRemoveExpiredSession) AddBlock() {
-	panic("implement me")
+func (m mockSessionRemoveExpiredSession) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
 }
 
-func (m mockSessionRemoveExpiredSession) CheckBlock() {
-	panic("implement me")
+func (m mockSessionRemoveExpiredSession) CheckIfExist(ctx context.Context, key string) error {
+	return nil
 }
 
 func (m mockSessionRemoveExpiredSession) New(ctx context.Context, session entities.Session) (entities.Session, error) {
@@ -130,12 +133,12 @@ func (m mockSessionRemoveExpiredSession) UserSessions(ctx context.Context, userI
 type mockSessionMoreThen5 struct {
 }
 
-func (m mockSessionMoreThen5) AddBlock() {
-	panic("implement me")
+func (m mockSessionMoreThen5) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
 }
 
-func (m mockSessionMoreThen5) CheckBlock() {
-	panic("implement me")
+func (m mockSessionMoreThen5) CheckIfExist(ctx context.Context, key string) error {
+	return nil
 }
 
 func (m mockSessionMoreThen5) New(ctx context.Context, session entities.Session) (entities.Session, error) {
@@ -162,3 +165,45 @@ func (m mockSessionMoreThen5) UserSessions(ctx context.Context, userId int) ([]e
 	}
 	return sessions, nil
 }
+
+type mockSessionBannedToken struct {
+
+}
+
+func (m mockSessionBannedToken) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
+}
+
+func (m mockSessionBannedToken) CheckIfExist(ctx context.Context, key string) error {
+	// This means that the session is not in the black list
+	return nil
+}
+
+func (m mockSessionBannedToken) New(ctx context.Context, session entities.Session) (entities.Session, error) {
+	return entities.Session{}, nil
+}
+
+func (m mockSessionBannedToken) Get(ctx context.Context, token string) (entities.Session, error) {
+	return entities.Session{}, nil
+}
+
+func (m mockSessionBannedToken) Remove(ctx context.Context, token string) (entities.Session, error) {
+	return entities.Session{
+		ID:           1,
+		UserId:       123,
+		RefreshToken: "123",
+		UserAgent:    "123",
+		Ip:           "10.10.0.1",
+		ExpiresIn:    time.Now().AddDate(0, 0, 1),
+		CreatedAt:    time.Now(),
+	}, nil
+}
+
+func (m mockSessionBannedToken) RemoveBatch(ctx context.Context, sessionid ...int) error {
+	return nil
+}
+
+func (m mockSessionBannedToken) UserSessions(ctx context.Context, userId int) ([]entities.Session, error) {
+	return nil, nil
+}
+

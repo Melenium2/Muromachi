@@ -9,7 +9,7 @@ import (
 func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		var token string
-		// Check if token  in cookie
+		// CheckAndDel if token  in cookie
 		cookieToken := c.Cookies(SecurityCookieName, "")
 		if cookieToken == "" {
 			// if not in cookie then check headers
@@ -32,9 +32,11 @@ func ApplyAuthMiddleware(security Defender) func(c *fiber.Ctx) error {
 		}
 
 		// Check if refresh token is banned in redis
-		// TODO Сделать Redis
-		if security.IsSessionBanned(claims.Id) {
-			return httpresp.Error(c, 401, ErrNotAuthenticated)
+		if claims.Id != "" {
+			if security.IsSessionBanned(c.Context(),claims.Id) {
+				ErrNotAuthenticated["additional"] = "your refresh token in blacklist"
+				return httpresp.Error(c, 401, ErrNotAuthenticated)
+			}
 		}
 
 		c.Locals("request_user", claims.UserClaims)

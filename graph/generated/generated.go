@@ -188,7 +188,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.App.StartAt(childComplexity), true
 
-	case "Categories.apprepo":
+	case "Categories.app":
 		if e.complexity.Categories.App == nil {
 			break
 		}
@@ -244,7 +244,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.DeveloperContacts.Email(childComplexity), true
 
-	case "Keywords.apprepo":
+	case "Keywords.app":
 		if e.complexity.Keywords.App == nil {
 			break
 		}
@@ -286,7 +286,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Keywords.Type(childComplexity), true
 
-	case "Meta.apprepo":
+	case "Meta.app":
 		if e.complexity.Meta.App == nil {
 			break
 		}
@@ -542,7 +542,7 @@ type Categories {
     type: String!
     place: Int!
     date: Time!
-    apprepo: App!
+    app: App!
 }
 
 type Keywords {
@@ -551,7 +551,7 @@ type Keywords {
     type: String!
     place: Int!
     date: Time!
-    apprepo: App!
+    app: App!
 }
 
 type DeveloperContacts {
@@ -582,7 +582,7 @@ type Meta{
     devContacts: DeveloperContacts!
     privacyPolicy: String!
     date: Time!
-    apprepo: App!
+    app: App!
 }
 
 type App{
@@ -3753,7 +3753,7 @@ func (ec *executionContext) _Categories(ctx context.Context, sel ast.SelectionSe
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "apprepo":
+		case "app":
 			out.Values[i] = ec._Categories_app(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3837,7 +3837,7 @@ func (ec *executionContext) _Keywords(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "apprepo":
+		case "app":
 			out.Values[i] = ec._Keywords_app(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3974,7 +3974,7 @@ func (ec *executionContext) _Meta(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "apprepo":
+		case "app":
 			out.Values[i] = ec._Meta_app(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
