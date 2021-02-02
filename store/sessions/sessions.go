@@ -48,6 +48,7 @@ func (s sessionsImpl) UserSessions(ctx context.Context, userId int) ([]entities.
 
 func New(sessions refreshrepo.RefreshSessions, blacklist banrepo.BlackList) *sessionsImpl {
 	return &sessionsImpl{
-		sessions: sessions,
+		sessions:  sessions,
+		blacklist: blacklist,
 	}
 }

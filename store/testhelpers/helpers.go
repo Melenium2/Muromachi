@@ -164,9 +164,9 @@ func RedisDb(c ...config.RedisConfig) (*redis.Client, func()) {
 	var cfg config.RedisConfig
 	if len(c) > 0 {
 		cfg = c[0]
+	} else {
+		cfg = config.New("../../config/dev.yml").Database.Redis
 	}
-	cfg = config.New("../../config/dev.yml").Database.Redis
-
 	client := redis.NewClient(&redis.Options{
 		Addr:               fmt.Sprintf("%s:%s", cfg.Address, cfg.Port),
 		Password:           cfg.Password,
