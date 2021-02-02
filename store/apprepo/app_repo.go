@@ -1,19 +1,21 @@
-package store
+package apprepo
 
 import (
+	"Muromachi/store/connector"
+	"Muromachi/store/entities"
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
 
-type AppRepo struct {
-	conn Conn
+type Repo struct {
+	conn connector.Conn
 }
 
-func (a *AppRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (DboSlice, error) {
-	var app App
-	var apps []DBO
+func (a *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
+	var app entities.App
+	var apps []entities.DBO
 
 	_, err := a.conn.QueryFunc(
 		ctx,
@@ -38,7 +40,7 @@ func (a *AppRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 	return apps, nil
 }
 
-func (a *AppRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error) {
+func (a *Repo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return a.ProducerFunc(
 		ctx,
 		"select * from app_tracking where id = $1",
@@ -46,7 +48,7 @@ func (a *AppRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error
 	)
 }
 
-func (a *AppRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (DboSlice, error) {
+func (a *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return a.ProducerFunc(
 		ctx,
 		"select * from app_tracking where bundleid = $1 and startat >= $2 and startat <= $3",
@@ -54,12 +56,12 @@ func (a *AppRepo) TimeRange(ctx context.Context, bundleId int, start, end time.T
 	)
 }
 
-func (a *AppRepo) LastUpdates(_ context.Context, _, _ int) (DboSlice, error) {
+func (a *Repo) LastUpdates(_ context.Context, _, _ int) (entities.DboSlice, error) {
 	return nil, fmt.Errorf("%s", "no last updates in this table")
 }
 
-func NewApp(conn Conn) *AppRepo {
-	return &AppRepo{
+func New(conn connector.Conn) *Repo {
+	return &Repo{
 		conn: conn,
 	}
 }

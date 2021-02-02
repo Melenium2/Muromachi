@@ -1,4 +1,4 @@
-package store
+package entities
 
 import (
 	"Muromachi/graph/model"
@@ -6,41 +6,6 @@ import (
 	"github.com/jackc/pgtype"
 	"time"
 )
-
-type DBO interface {
-	To(to interface{}) error
-}
-
-type App struct {
-	Id          int       `json:"-"`
-	Bundle      string    `json:"bundle,omitempty"`
-	Category    string    `json:"category,omitempty"`
-	DeveloperId string    `json:"developer_id,omitempty"`
-	Developer   string    `json:"developer,omitempty"`
-	Geo         string    `json:"geo,omitempty"`
-	StartAt     time.Time `json:"start_at,omitempty"`
-	Period      uint32    `json:"period,omitempty"`
-}
-
-func (a App) To(to interface{}) error {
-	switch v := to.(type) {
-	case *App:
-		*v = a
-	case *model.App:
-		v.ID = a.Id
-		v.Bundle = a.Bundle
-		v.Category = a.Category
-		v.DeveloperID = a.DeveloperId
-		v.Developer = a.Developer
-		v.Geo = a.Geo
-		v.StartAt = a.StartAt
-		v.Period = int(a.Period)
-	default:
-		return fmt.Errorf("%s", "param 'to' not the same type with *App")
-	}
-
-	return nil
-}
 
 type Meta struct {
 	Id                int               `json:"-"`
@@ -65,7 +30,7 @@ type Meta struct {
 	DeveloperContacts DeveloperContacts `json:"developerContacts" db:"developer_contacts"`
 	PrivacyPolicy     string            `json:"privacyPolicy,omitempty"`
 	Date              time.Time         `json:"date,omitempty"`
-	App               App               `json:"app,omitempty"`
+	App               App               `json:"apprepo,omitempty"`
 }
 
 func (m Meta) To(to interface{}) error {
@@ -108,44 +73,6 @@ func (m Meta) To(to interface{}) error {
 	return nil
 }
 
-type Track struct {
-	Id       int       `json:"-"`
-	BundleId int       `json:"bundle,omitempty"`
-	Type     string    `json:"type,omitempty"`
-	Date     time.Time `json:"date,omitempty"`
-	Place    int32     `json:"place,omitempty"`
-	App      App       `json:"app,omitempty"`
-}
-
-func (tr Track) To(to interface{}) error {
-	switch v := to.(type) {
-	case *Track:
-		*v = tr
-	case *model.Categories:
-		v.ID = tr.Id
-		v.BundleID = tr.BundleId
-		v.Type = tr.Type
-		v.Date = tr.Date
-		v.Place = int(tr.Place)
-		v.App = &model.App{}
-
-		return tr.App.To(v.App)
-	case *model.Keywords:
-		v.ID = tr.Id
-		v.BundleID = tr.BundleId
-		v.Type = tr.Type
-		v.Date = tr.Date
-		v.Place = int(tr.Place)
-		v.App = &model.App{}
-
-		return tr.App.To(v.App)
-	default:
-		return fmt.Errorf("%s", "param 'to' not the same type with *Track")
-	}
-
-	return nil
-}
-
 type DeveloperContacts struct {
 	Email    string `json:"email,omitempty"`
 	Contacts string `json:"contacts,omitempty"`
@@ -168,59 +95,4 @@ func (src DeveloperContacts) EncodeBinary(ci *pgtype.ConnInfo, buf []byte) (newB
 	contacts := pgtype.Text{String: src.Contacts, Status: pgtype.Present}
 
 	return (pgtype.CompositeFields{&email, &contacts}).EncodeBinary(ci, buf)
-}
-
-type DboSlice []DBO
-
-func (d DboSlice) To(to interface{}) error {
-	switch v := to.(type) {
-	case []*model.App:
-		if len(v) != len(d) {
-			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
-		}
-		for i, value := range d {
-			app := &model.App{}
-			if err := value.To(app); err != nil {
-				return err
-			}
-			v[i] = app
-		}
-	case []*model.Meta:
-		if len(v) != len(d) {
-			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
-		}
-		for i, value := range d {
-			meta := &model.Meta{}
-			if err := value.To(meta); err != nil {
-				return err
-			}
-			v[i] = meta
-		}
-	case []*model.Categories:
-		if len(v) != len(d) {
-			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
-		}
-		for i, value := range d {
-			cat := &model.Categories{}
-			if err := value.To(cat); err != nil {
-				return err
-			}
-			v[i] = cat
-		}
-	case []*model.Keywords:
-		if len(v) != len(d) {
-			return fmt.Errorf("len of pointer 'to' not the same with len of DboSlice")
-		}
-		for i, value := range d {
-			key := &model.Keywords{}
-			if err := value.To(key); err != nil {
-				return err
-			}
-			v[i] = key
-		}
-	default:
-		return fmt.Errorf("param 'to' not the same type with next types ([]*model.App, []*model.Meta, []*model.Categories, []*model.Keywords)")
-	}
-
-	return nil
 }

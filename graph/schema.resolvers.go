@@ -7,14 +7,14 @@ import (
 	"Muromachi/graph/generated"
 	"Muromachi/graph/model"
 	"Muromachi/graph/scalar"
-	"Muromachi/store"
+	"Muromachi/store/entities"
 	"context"
 	"time"
 )
 
 func (r *queryResolver) Meta(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Meta, error) {
 	var (
-		dbo store.DboSlice
+		dbo entities.DboSlice
 		err error
 	)
 	if start != nil && end != nil {
@@ -44,7 +44,7 @@ func (r *queryResolver) Meta(ctx context.Context, id int, last *int, start *scal
 
 func (r *queryResolver) Cats(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Categories, error) {
 	var (
-		dbo store.DboSlice
+		dbo entities.DboSlice
 		err error
 	)
 	if start != nil && end != nil {
@@ -74,7 +74,7 @@ func (r *queryResolver) Cats(ctx context.Context, id int, last *int, start *scal
 
 func (r *queryResolver) Keys(ctx context.Context, id int, last *int, start *scalar.FormattedDate, end *scalar.FormattedDate) ([]*model.Keywords, error) {
 	var (
-		dbo store.DboSlice
+		dbo entities.DboSlice
 		err error
 	)
 	if start != nil && end != nil {

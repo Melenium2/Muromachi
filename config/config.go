@@ -4,7 +4,15 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"time"
 )
+
+type Authorization struct {
+	JwtSalt    string        `yaml:"jwt_salt"`
+	JwtExpires time.Duration `yaml:"jwt_expires"`
+	JwtIss     string        `yaml:"jwt_iss"`
+	JwtAud     string        `yaml:"jwt_aud"`
+}
 
 //Database config
 type DBConfig struct {
@@ -18,7 +26,8 @@ type DBConfig struct {
 
 // Config struct of application config
 type Config struct {
-	Database DBConfig  `yaml:"database"`
+	Database DBConfig      `yaml:"database"`
+	Auth     Authorization `yaml:"auth"`
 
 	Envs []string `yaml:",flow"`
 }
@@ -35,7 +44,7 @@ func loadEnvs(e ...string) map[string]string {
 	return envs
 }
 
-// New Create new instance of app config with given path to (../config.yml)
+// New Create new instance of apprepo config with given path to (../config.yml)
 func New(p ...string) Config {
 	path := "./dev.yml"
 	if len(p) > 0 {
@@ -48,7 +57,7 @@ func New(p ...string) Config {
 	}
 
 	config := Config{}
-	if err := yaml.Unmarshal(data, &config); err != nil {
+	if err = yaml.Unmarshal(data, &config); err != nil {
 		panic(err)
 	}
 

@@ -4,4 +4,4 @@ database:
   password: 123456
   address: localhost
   port: 5432
-  schema: ../../../config/schema.sql
+  schema: ../../config/schema.sql

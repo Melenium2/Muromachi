@@ -1,19 +1,21 @@
-package store
+package trackepo
 
 import (
+	"Muromachi/store/connector"
+	"Muromachi/store/entities"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"time"
 )
 
 type CatRepo struct {
-	conn Conn
+	conn connector.Conn
 }
 
-func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (DboSlice, error) {
-	var key Track
-	var app App
-	var keys []DBO
+func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
+	var key entities.Track
+	var app entities.App
+	var keys []entities.DBO
 
 	_, err := c.conn.QueryFunc(
 		ctx,
@@ -40,7 +42,7 @@ func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 	return keys, nil
 }
 
-func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error) {
+func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
 		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id  where CAT.bundleid = $1",
@@ -48,7 +50,7 @@ func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (DboSlice, error
 	)
 }
 
-func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (DboSlice, error) {
+func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
 		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id where CAT.bundleid = $1 and CAT.date >= $2 and CAT.date <= $3",
@@ -56,7 +58,7 @@ func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.T
 	)
 }
 
-func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSlice, error) {
+func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
 		"select * from category_tracking CAT inner join app_tracking APP on CAT.bundleid = APP.id where CAT.bundleid = $1 order by CAT.id desc limit $2",
@@ -64,7 +66,7 @@ func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (DboSlic
 	)
 }
 
-func NewCat(conn Conn) *CatRepo {
+func NewCat(conn connector.Conn) *CatRepo {
 	return &CatRepo{
 		conn: conn,
 	}

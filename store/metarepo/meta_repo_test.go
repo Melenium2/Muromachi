@@ -1,7 +1,9 @@
-package store_test
+package metarepo_test
 
 import (
-	"Muromachi/store"
+	"Muromachi/store/entities"
+	"Muromachi/store/metarepo"
+	"Muromachi/store/testhelpers"
 	"context"
 	"github.com/jackc/pgx/v4"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +13,7 @@ import (
 
 func TestMetaRepo_ByBundleId_ShouldReturnSomeApps_Mock(t *testing.T) {
 	conn := mockMetaConnection{}
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 12)
@@ -19,7 +21,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps_Mock(t *testing.T) {
 	assert.NotNil(t, dboSlice)
 	assert.Equal(t, 3, len(dboSlice))
 
-	var app store.Meta
+	var app entities.Meta
 	assert.NoError(t, dboSlice[0].To(&app))
 	assert.Equal(t, "Im title", app.Title)
 	assert.Equal(t, 3, len(app.Screenshots))
@@ -29,18 +31,18 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_ByBundleId_ShouldReturnSomeApps(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("app_tracking, meta_tracking")
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
-	bundleId, err := AddNewApp(conn, ctx, store.App{
+	bundleId, err := testhelpers.AddNewApp(conn, ctx, entities.App{
 		Bundle: "123",
 	})
 
-	meta := MetaStruct(bundleId)
+	meta := testhelpers.MetaStruct(bundleId)
 	for i := 0; i < 3; i++ {
-		_, err := AddNewMeta(conn, ctx, meta)
+		_, err := testhelpers.AddNewMeta(conn, ctx, meta)
 		assert.NoError(t, err)
 		meta.Date = meta.Date.AddDate(0, 0, 1 + i)
 	}
@@ -49,7 +51,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, dboSlice)
 
-	var app store.Meta
+	var app entities.Meta
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&app))
 		assert.Equal(t, bundleId, app.BundleId)
@@ -59,7 +61,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnSomeApps(t *testing.T) {
 
 func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange_Mock(t *testing.T) {
 	conn := mockMetaConnection{}
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	t1, _ := time.Parse("2006-01-02", "2021-01-18")
@@ -68,7 +70,7 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange_Mock(t *testing.T
 	assert.NoError(t, err)
 	assert.NotNil(t, dboSlice)
 
-	var app, lastApp store.Meta
+	var app, lastApp entities.Meta
 	assert.NoError(t, dboSlice[0].To(&app))
 	assert.NoError(t, dboSlice[2].To(&lastApp))
 
@@ -78,18 +80,18 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange_Mock(t *testing.T
 }
 
 func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("app_tracking, meta_tracking")
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
-	bundleId, err := AddNewApp(conn, ctx, store.App{
+	bundleId, err := testhelpers.AddNewApp(conn, ctx, entities.App{
 		Bundle: "123",
 	})
 
-	meta := MetaStruct(bundleId)
+	meta := testhelpers.MetaStruct(bundleId)
 	for i := 0; i < 3; i++ {
-		_, err := AddNewMeta(conn, ctx, meta)
+		_, err := testhelpers.AddNewMeta(conn, ctx, meta)
 		assert.NoError(t, err)
 		meta.Date = meta.Date.AddDate(0, 0, 1 + i)
 	}
@@ -99,7 +101,7 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, dboSlice)
 
-	var app store.Meta
+	var app entities.Meta
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&app))
 		assert.Equal(t, bundleId, app.BundleId)
@@ -110,7 +112,7 @@ func TestMetaRepo_TimeRange_ShouldReturnAppsWithGivenTimeRange(t *testing.T) {
 
 func TestMetaRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 	conn := mockMetaConnection{}
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 12, 3)
@@ -120,18 +122,18 @@ func TestMetaRepo_LastUpdates_ShouldReturnLastNApps_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
-	conn, cleaner := RealDb()
+	conn, cleaner := testhelpers.RealDb()
 	defer cleaner("app_tracking, meta_tracking")
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
-	bundleId, err := AddNewApp(conn, ctx, store.App{
+	bundleId, err := testhelpers.AddNewApp(conn, ctx, entities.App{
 		Bundle: "123",
 	})
 
-	meta := MetaStruct(bundleId)
+	meta := testhelpers.MetaStruct(bundleId)
 	for i := 0; i < 4; i++ {
-		_, err := AddNewMeta(conn, ctx, meta)
+		_, err := testhelpers.AddNewMeta(conn, ctx, meta)
 		assert.NoError(t, err)
 		meta.Date = meta.Date.AddDate(0, 0, 1 + i)
 	}
@@ -141,7 +143,7 @@ func TestMetaRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 	assert.NotNil(t, dboSlice)
 	assert.Equal(t, 2, len(dboSlice))
 
-	var app store.Meta
+	var app entities.Meta
 	id := 1000
 	for _, v := range dboSlice {
 		assert.NoError(t, v.To(&app))
@@ -154,7 +156,7 @@ func TestMetaRepo_LastUpdates_ShouldReturnLastNApps(t *testing.T) {
 
 func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockMetaConnectionErrors{}
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 12)
@@ -164,8 +166,8 @@ func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := RealDb()
-	repo := store.NewMeta(conn)
+	conn, _ := testhelpers.RealDb()
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.ByBundleId(ctx, 12)
@@ -176,7 +178,7 @@ func TestMetaRepo_ByBundleId_ShouldReturnErrorIfNoRows(t *testing.T) {
 
 func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockMetaConnectionErrors{}
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.TimeRange(ctx, 12, time.Now(), time.Now())
@@ -186,8 +188,8 @@ func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := RealDb()
-	repo := store.NewMeta(conn)
+	conn, _ := testhelpers.RealDb()
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.TimeRange(ctx, 12, time.Now(), time.Now())
@@ -198,7 +200,7 @@ func TestMetaRepo_TimeRange_ShouldReturnErrorIfNoRows(t *testing.T) {
 
 func TestMetaRepo_LastUpdate_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 	conn := mockMetaConnectionErrors{}
-	repo := store.NewMeta(conn)
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 12, 1)
@@ -208,8 +210,8 @@ func TestMetaRepo_LastUpdate_ShouldReturnErrorIfNoRows_Mock(t *testing.T) {
 }
 
 func TestMetaRepo_LastUpdate_ShouldReturnErrorIfNoRows(t *testing.T) {
-	conn, _ := RealDb()
-	repo := store.NewMeta(conn)
+	conn, _ := testhelpers.RealDb()
+	repo := metarepo.New(conn)
 	ctx := context.Background()
 
 	dboSlice, err := repo.LastUpdates(ctx, 12, 1)
