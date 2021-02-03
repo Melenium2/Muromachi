@@ -50,15 +50,18 @@ func (s *Server) initRoutes() {
 	s.app.Get(urlForGeneration, NewCompany(s.sessions))
 }
 
+// Start listening tcp port
 func (s *Server) Listen() error {
 	s.initRoutes()
 	return s.app.Listen(s.port)
 }
 
+// Shutdown server
 func (s *Server) Shutdown() error {
 	return s.app.Shutdown()
 }
 
+// Init new server with given port and application config
 func New(port string, config config.Config) *Server {
 	// Init postgres
 	conn, err := connector.EstablishPostgresConnection(config.Database)

@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// Handler for graphql testground
 func Testground() func(ctx *fiber.Ctx) error {
 	play := playground.Handler("GraphQL playground", "/query")
 
@@ -23,6 +24,7 @@ func Testground() func(ctx *fiber.Ctx) error {
 	}
 }
 
+// Graphql handler
 func Graphql(resolver generated.ResolverRoot) func(ctx *fiber.Ctx) error {
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(
@@ -130,6 +132,7 @@ func Ban(collection *users.Tables) func(*fiber.Ctx) error {
 			return httpresp.Error(ctx, 400, "can not parse to token list")
 		}
 
+		// If user id is presented
 		if list.UserId > 0 {
 			sessions, err := collection.Sessions.UserSessions(ctx.Context(), list.UserId)
 			if err == nil {
@@ -137,6 +140,7 @@ func Ban(collection *users.Tables) func(*fiber.Ctx) error {
 			}
 		}
 
+		// Adding sessions with same tokens from token list
 		for _, token := range list.Tokens {
 			session, err := collection.Sessions.Get(ctx.Context(), token)
 			if err != nil {
@@ -145,6 +149,7 @@ func Ban(collection *users.Tables) func(*fiber.Ctx) error {
 			forBan = append(forBan, session)
 		}
 
+		// Add sessions to blacklist
 		for _, s := range forBan {
 			if err := collection.Sessions.Add(
 				ctx.Context(),
@@ -176,6 +181,7 @@ func Unban(collection *users.Tables) func(*fiber.Ctx) error {
 			return httpresp.Error(ctx, 400, "can not parse to token list")
 		}
 
+		// if user id is presented
 		if list.UserId > 0 {
 			sessions, err := collection.Sessions.UserSessions(ctx.Context(), list.UserId)
 			if err == nil {
@@ -184,8 +190,10 @@ func Unban(collection *users.Tables) func(*fiber.Ctx) error {
 				}
 			}
 		}
+		// append given tokens from request
 		antiBan = append(antiBan, list.Tokens...)
 
+		// if slice not nil then remove sessions from blacklist
 		if len(antiBan) > 0 {
 			n, err := collection.Sessions.Del(ctx.Context(), antiBan...)
 			if err != nil || int(n) != len(antiBan) {

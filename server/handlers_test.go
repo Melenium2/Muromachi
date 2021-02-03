@@ -28,17 +28,20 @@ import (
 )
 
 func TestAuthorize_Mock(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "nunetprivet",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
 
+	// Pepare handler
 	sec := auth.NewSecurity(cfg, mockSession{})
 	col := users.NewAuthTables(mockSession{}, userstore.NewUserRepo(mockConn{}))
 
 	handler := server.Authorize(sec, col)
 
+	// Prepare fiber app
 	app := fiber.New()
 	app.Post("/auth", handler)
 
@@ -123,6 +126,7 @@ func TestAuthorize_Mock(t *testing.T) {
 				b           io.Reader
 				contentType string
 			)
+			// Encode data with json encoding or x-www-form-urlencoded
 			if test.withJson {
 				by, _ := json.Marshal(test.request)
 				b = bytes.NewReader(by)
@@ -152,12 +156,14 @@ func TestAuthorize_Mock(t *testing.T) {
 }
 
 func TestAuthorize_WithWrongRequestDataType(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "nunetprivet",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
 
+	// Prepare handler
 	sec := auth.NewSecurity(cfg, mockSession{})
 	col := users.NewAuthTables(mockSession{}, userstore.NewUserRepo(mockConn{}))
 
@@ -166,6 +172,7 @@ func TestAuthorize_WithWrongRequestDataType(t *testing.T) {
 	app := fiber.New()
 	app.Post("/auth", handler)
 
+	// Generate wrong data type
 	by, _ := json.Marshal(map[string]interface{}{
 		"hihi": "123",
 	})
@@ -183,17 +190,22 @@ func TestAuthorize_WithWrongRequestDataType(t *testing.T) {
 }
 
 func TestAuthorize(t *testing.T) {
+	// Load config from file
 	cfg := config.New("../config/dev.yml")
+	// Change path to database schema
 	cfg.Database.Schema = "../config/schema.sql"
+	// Conn to real db
 	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
+	// Add auth config
 	cfg.Auth = config.Authorization{
 		JwtSalt:    "nunetprivet",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
 
+	// Prepare db
 	userRepo := userstore.NewUserRepo(conn)
 	u := entities.User{
 		Company: "123",
@@ -203,10 +215,12 @@ func TestAuthorize(t *testing.T) {
 	user, err := userRepo.Create(context.Background(), u)
 	assert.NoError(t, err)
 
+	// Conn to redis
 	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
 	defer redisCleaner()
 	blacklist := blacklist.New(redisConn)
 
+	// Prepare handler
 	sessionRepo := sessions.New(tokens.New(conn), blacklist)
 
 	sec := auth.NewSecurity(cfg.Auth, sessionRepo)
@@ -303,6 +317,7 @@ func TestAuthorize(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
+			// For each test generate 2 sessions
 			_, _ = sessionRepo.New(context.Background(), entities.Session{
 				UserId:       user.ID,
 				RefreshToken: "123",
@@ -325,6 +340,7 @@ func TestAuthorize(t *testing.T) {
 			req, _ := http.NewRequest("POST", "/auth", b)
 			req.Header.Set("Content-Type", "application/json")
 
+			// Add to black list if true
 			if test.inBlackList {
 				_ = blacklist.Add(context.Background(), test.request.RefreshToken, "123", time.Hour)
 			}
@@ -397,6 +413,7 @@ func TestBan_Mock(t *testing.T) {
 				b  io.Reader
 				by []byte
 			)
+			// Prepare data. If withWrongDataType is not nil encode wrong data type
 			if test.withWrongDataType != nil {
 				by, _ = json.Marshal(test.withWrongDataType)
 			} else {
@@ -410,6 +427,7 @@ func TestBan_Mock(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, test.expectedCode, resp.StatusCode)
 
+			// Check count
 			var info requests.BanInfo
 			by, _ = ioutil.ReadAll(resp.Body)
 			_ = json.Unmarshal(by, &info)
@@ -419,11 +437,15 @@ func TestBan_Mock(t *testing.T) {
 }
 
 func TestBan(t *testing.T) {
+	// Load config
 	cfg := config.New("../config/dev.yml")
+	// Change path to database schema
 	cfg.Database.Schema = "../config/schema.sql"
+	// Conn to real db
 	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
+	// Prepare db
 	userRepo := userstore.NewUserRepo(conn)
 	u := entities.User{
 		Company: "123",
@@ -432,10 +454,12 @@ func TestBan(t *testing.T) {
 	user, err := userRepo.Create(context.Background(), u)
 	assert.NoError(t, err)
 
+	// Conn to redis
 	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
 	defer redisCleaner()
 	blacklist := blacklist.New(redisConn)
 
+	// Prepare handler
 	sessionRepo := sessions.New(tokens.New(conn), blacklist)
 	col := users.NewAuthTables(sessionRepo, userRepo)
 
@@ -541,6 +565,7 @@ func TestBan(t *testing.T) {
 				by    []byte
 				clean func()
 			)
+			// If not nil before each test run precomputed()
 			if test.precomputed != nil {
 				clean = test.precomputed()
 			}
@@ -563,6 +588,7 @@ func TestBan(t *testing.T) {
 			_ = json.Unmarshal(by, &info)
 			assert.Equal(t, test.expectedBans, info.Count)
 
+			// if clean func not nil then run func
 			if clean != nil {
 				clean()
 			}
@@ -645,13 +671,17 @@ func TestUnban_Mock(t *testing.T) {
 }
 
 func TestUnban(t *testing.T) {
+	// Load config
 	cfg := config.New("../config/dev.yml")
+	// Change path to database schema
 	cfg.Database.Schema = "../config/schema.sql"
+	// Conn to real db
 	conn, cleaner := testhelpers.RealDb(cfg.Database)
 	defer cleaner("users", "refresh_sessions")
 
 	ctx := context.Background()
 
+	// Prepare db
 	userRepo := userstore.NewUserRepo(conn)
 	u := entities.User{
 		Company: "123",
@@ -660,10 +690,12 @@ func TestUnban(t *testing.T) {
 	user, err := userRepo.Create(context.Background(), u)
 	assert.NoError(t, err)
 
+	// Conn to redis
 	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
 	defer redisCleaner()
 	blacklist := blacklist.New(redisConn)
 
+	// Prepare handler
 	sessionRepo := sessions.New(tokens.New(conn), blacklist)
 	col := users.NewAuthTables(sessionRepo, userRepo)
 
@@ -757,6 +789,7 @@ func TestUnban(t *testing.T) {
 				by    []byte
 				clean func()
 			)
+			// if precomputed not nil then run before test
 			if test.precomputed != nil {
 				clean = test.precomputed()
 			}
@@ -775,10 +808,10 @@ func TestUnban(t *testing.T) {
 
 			var info requests.BanInfo
 			by, _ = ioutil.ReadAll(resp.Body)
-			t.Log(string(by))
 			_ = json.Unmarshal(by, &info)
 			assert.Equal(t, test.expectedDeletions, info.Count)
 
+			// if clean not nil then run after test
 			if clean != nil {
 				clean()
 			}
