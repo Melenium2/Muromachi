@@ -10,6 +10,7 @@ import (
 type BlackList interface {
 	Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error
 	CheckIfExist(ctx context.Context, key string) error
+	Del(ctx context.Context, keys ...string) (int64, error)
 }
 
 type blackList struct {
@@ -32,6 +33,14 @@ func (b blackList) CheckIfExist(ctx context.Context, key string) error {
 	default:
 		return err
 	}
+}
+
+// Remove keys from db
+func (b blackList) Del(ctx context.Context, keys ...string) (int64, error) {
+	if len(keys) <= 0 {
+		return 0, nil
+	}
+	return b.client.Del(ctx, keys...).Result()
 }
 
 func New(client *redis.Client) *blackList {

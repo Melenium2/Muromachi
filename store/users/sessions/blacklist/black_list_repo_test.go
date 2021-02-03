@@ -142,3 +142,60 @@ func TestBlackList_CheckIfExist(t *testing.T) {
 		})
 	}
 }
+
+func TestBlackList_Del_Mock_ShouldRemoveKeysAndReturnKeysCount(t *testing.T) {
+	db, mock := redismock.NewClientMock()
+	repo := blacklist.New(db)
+	ctx := context.Background()
+
+	hash := utils.Hash("123", "123")
+	mock.ExpectDel(hash).SetVal(3)
+	i, err := repo.Del(ctx, hash)
+	assert.NoError(t, err)
+	assert.Equal(t, 3, int(i))
+}
+
+func TestBlackList_Del(t *testing.T) {
+	cfg := config.New("../../../../config/dev.yml")
+
+	conn, cleaner := testhelpers.RedisDb(cfg.Database.Redis)
+	defer cleaner()
+	repo := blacklist.New(conn)
+	ctx := context.Background()
+
+	hash := utils.Hash("123", "123")
+	_ = repo.Add(ctx, hash, 123, time.Minute*3)
+
+	var tt = []struct {
+		name            string
+		hash            []string
+		expectedError   bool
+		expectedRemoves int64
+	}{
+		{
+			name:            "should remove keys",
+			hash:            []string{hash},
+			expectedError:   false,
+			expectedRemoves: 1,
+		},
+		{
+			name:            "should remove nothing and return no error",
+			hash:            []string{},
+			expectedError:   false,
+			expectedRemoves: 0,
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			n, err := repo.Del(ctx, test.hash...)
+			assert.Equal(t, err != nil, test.expectedError)
+			assert.Equal(t, test.expectedRemoves, n)
+
+			for _, h := range test.hash {
+				err := repo.CheckIfExist(ctx, h)
+				assert.Error(t, err)
+			}
+		})
+	}
+}
