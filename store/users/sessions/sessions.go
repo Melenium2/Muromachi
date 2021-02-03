@@ -26,6 +26,10 @@ func (s sessionsImpl) CheckIfExist(ctx context.Context, key string) error {
 	return s.blacklist.CheckIfExist(ctx, key)
 }
 
+func (s sessionsImpl) Del(ctx context.Context, keys ...string) (int64, error) {
+	return s.blacklist.Del(ctx, keys...)
+}
+
 func (s sessionsImpl) New(ctx context.Context, session entities.Session) (entities.Session, error) {
 	return s.sessions.New(ctx, session)
 }

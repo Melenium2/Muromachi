@@ -4,12 +4,14 @@ import (
 	"Muromachi/auth"
 	"Muromachi/graph/generated"
 	"Muromachi/httpresp"
+	"Muromachi/server/requests"
 	"Muromachi/store/entities"
 	"Muromachi/store/users"
 	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gofiber/fiber/v2"
+	"time"
 )
 
 func Testground() func(ctx *fiber.Ctx) error {
@@ -102,7 +104,7 @@ func NewCompany(sessions *users.Tables) func(*fiber.Ctx) error {
 		}
 
 		user := entities.User{
-			Company:      company,
+			Company: company,
 		}
 		err = user.GenerateSecrets()
 		if err != nil {
@@ -118,15 +120,84 @@ func NewCompany(sessions *users.Tables) func(*fiber.Ctx) error {
 }
 
 // Ban refresh session
-func Ban(collection *users.Tables) func (*fiber.Ctx) error {
+func Ban(collection *users.Tables) func(*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		return nil
+		var (
+			list   requests.TokenList
+			forBan []entities.Session
+		)
+		if err := ctx.BodyParser(&list); err != nil {
+			return httpresp.Error(ctx, 400, "can not parse to token list")
+		}
+
+		if list.UserId > 0 {
+			sessions, err := collection.Sessions.UserSessions(ctx.Context(), list.UserId)
+			if err == nil {
+				forBan = append(forBan, sessions...)
+			}
+		}
+
+		for _, token := range list.Tokens {
+			session, err := collection.Sessions.Get(ctx.Context(), token)
+			if err != nil {
+				return httpresp.Error(ctx, 400, err.Error())
+			}
+			forBan = append(forBan, session)
+		}
+
+		for _, s := range forBan {
+			if err := collection.Sessions.Add(
+				ctx.Context(),
+				s.RefreshToken,
+				s.ID,
+				time.Duration(list.Ttl),
+			); err != nil {
+				return httpresp.Error(ctx, 400, err.Error())
+			}
+		}
+
+		return ctx.JSON(requests.BanInfo{
+			Type:   "ban",
+			Count:  len(forBan),
+			Tokens: forBan,
+			At:     time.Now(),
+		})
 	}
 }
 
 // Unban refresh session
-func Unban(collection *users.Tables) func (*fiber.Ctx) error {
+func Unban(collection *users.Tables) func(*fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		return nil
+		var (
+			list    requests.TokenList
+			antiBan []string
+		)
+		if err := ctx.BodyParser(&list); err != nil {
+			return httpresp.Error(ctx, 400, "can not parse to token list")
+		}
+
+		if list.UserId > 0 {
+			sessions, err := collection.Sessions.UserSessions(ctx.Context(), list.UserId)
+			if err == nil {
+				for _, s := range sessions {
+					antiBan = append(antiBan, s.RefreshToken)
+				}
+			}
+		}
+		antiBan = append(antiBan, list.Tokens...)
+
+		if len(antiBan) > 0 {
+			n, err := collection.Sessions.Del(ctx.Context(), antiBan...)
+			if err != nil || int(n) != len(antiBan) {
+				return httpresp.Error(ctx, 500, "unexpected error while deletion")
+			}
+		}
+
+		return ctx.JSON(requests.BanInfo{
+			Type:   "unban",
+			Count:  len(antiBan),
+			Tokens: antiBan,
+			At:     time.Now(),
+		})
 	}
 }

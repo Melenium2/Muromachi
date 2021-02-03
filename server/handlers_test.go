@@ -4,6 +4,7 @@ import (
 	"Muromachi/auth"
 	"Muromachi/config"
 	"Muromachi/server"
+	"Muromachi/server/requests"
 	"Muromachi/store/entities"
 	"Muromachi/store/testhelpers"
 	"Muromachi/store/users"
@@ -14,6 +15,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
 	"io"
@@ -336,5 +338,450 @@ func TestAuthorize(t *testing.T) {
 			t.Log(string(by))
 		})
 	}
+}
 
+func TestBan_Mock(t *testing.T) {
+	tables := users.NewAuthTables(mockSession{}, userstore.NewUserRepo(mockConn{}))
+
+	handler := server.Ban(tables)
+
+	app := fiber.New()
+	app.Post("/ban", handler)
+
+	var tt = []struct {
+		name              string
+		tokenList         requests.TokenList
+		withWrongDataType interface{}
+		expectedCode      int
+		expectedBans      int
+	}{
+		{
+			name: "should ban both user and refresh tokens",
+			tokenList: requests.TokenList{
+				UserId: 13,
+				Tokens: []string{"123", "321", "132"},
+				Ttl:    int(time.Hour * 24),
+			},
+			expectedCode: 200,
+			expectedBans: 5,
+		},
+		{
+			name:              "should return error if wrong data type",
+			withWrongDataType: []int{1, 2, 3},
+			expectedCode:      400,
+		},
+		{
+			name: "should ban only user session",
+			tokenList: requests.TokenList{
+				UserId: 15,
+				Tokens: nil,
+				Ttl:    int(time.Hour * 24),
+			},
+			expectedCode: 200,
+			expectedBans: 2,
+		},
+		{
+			name: "should ban only refresh tokens",
+			tokenList: requests.TokenList{
+				Tokens: []string{"123", "321", "132"},
+				Ttl:    int(time.Hour * 24),
+			},
+			expectedCode: 200,
+			expectedBans: 3,
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			var (
+				b  io.Reader
+				by []byte
+			)
+			if test.withWrongDataType != nil {
+				by, _ = json.Marshal(test.withWrongDataType)
+			} else {
+				by, _ = json.Marshal(test.tokenList)
+			}
+			b = bytes.NewBuffer(by)
+
+			req, _ := http.NewRequest("POST", "/ban", b)
+			req.Header.Set("content-type", "application/json")
+			resp, err := app.Test(req, 1000*60)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode)
+
+			var info requests.BanInfo
+			by, _ = ioutil.ReadAll(resp.Body)
+			_ = json.Unmarshal(by, &info)
+			assert.Equal(t, test.expectedBans, info.Count)
+		})
+	}
+}
+
+func TestBan(t *testing.T) {
+	cfg := config.New("../config/dev.yml")
+	cfg.Database.Schema = "../config/schema.sql"
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
+	defer cleaner("users", "refresh_sessions")
+
+	userRepo := userstore.NewUserRepo(conn)
+	u := entities.User{
+		Company: "123",
+	}
+	_ = u.GenerateSecrets()
+	user, err := userRepo.Create(context.Background(), u)
+	assert.NoError(t, err)
+
+	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
+	defer redisCleaner()
+	blacklist := blacklist.New(redisConn)
+
+	sessionRepo := sessions.New(tokens.New(conn), blacklist)
+	col := users.NewAuthTables(sessionRepo, userRepo)
+
+	handler := server.Ban(col)
+
+	var tt = []struct {
+		name              string
+		tokenList         requests.TokenList
+		withWrongDataType interface{}
+		expectedCode      int
+		expectedBans      int
+		// Like before each and after each
+		precomputed func() func()
+	}{
+		{
+			name: "should ban both user and refresh tokens",
+			tokenList: requests.TokenList{
+				UserId: user.ID,
+				Tokens: []string{"123"},
+				Ttl:    int(time.Hour * 24),
+			},
+			expectedCode: 200,
+			expectedBans: 6,
+			precomputed: func() func() {
+				ses := entities.Session{UserId: user.ID, RefreshToken: "123"}
+				for i := 0; i < 5; i++ {
+					_, err = sessionRepo.New(context.Background(), ses)
+					assert.NoError(t, err)
+					ses.RefreshToken += fmt.Sprintf("%d", i+1)
+				}
+
+				return func() {
+					cleaner("refresh_sessions")
+					redisCleaner()
+				}
+			},
+		},
+		{
+			name: "should return pgx error no rows in result set",
+			tokenList: requests.TokenList{
+				Tokens: []string{"123"},
+			},
+			expectedCode: 400,
+		},
+		{
+			name:              "should return error if wrong data type",
+			withWrongDataType: []int{1, 2, 3},
+			expectedCode:      400,
+		},
+		{
+			name: "should ban only user session",
+			tokenList: requests.TokenList{
+				UserId: user.ID,
+				Ttl:    int(time.Hour * 24),
+			},
+			expectedCode: 200,
+			expectedBans: 3,
+			precomputed: func() func() {
+				ses := entities.Session{UserId: user.ID, RefreshToken: "123"}
+				for i := 0; i < 3; i++ {
+					_, err = sessionRepo.New(context.Background(), ses)
+					assert.NoError(t, err)
+					ses.RefreshToken += fmt.Sprintf("%d", i+1)
+				}
+
+				return func() {
+					cleaner("refresh_sessions")
+					redisCleaner()
+				}
+			},
+		},
+		{
+			name: "should ban only refresh tokens",
+			tokenList: requests.TokenList{
+				Tokens: []string{"123", "321", "132"},
+				Ttl:    int(time.Hour * 24),
+			},
+			expectedCode: 200,
+			expectedBans: 3,
+			precomputed: func() func() {
+				ses := entities.Session{UserId: user.ID, RefreshToken: "123"}
+				_, err = sessionRepo.New(context.Background(), ses)
+				ses.RefreshToken = "321"
+				_, err = sessionRepo.New(context.Background(), ses)
+				ses.RefreshToken = "132"
+				_, err = sessionRepo.New(context.Background(), ses)
+
+				return func() {
+					cleaner("refresh_sessions")
+					redisCleaner()
+				}
+			},
+		},
+	}
+
+	app := fiber.New()
+	app.Post("/ban", handler)
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			var (
+				b     io.Reader
+				by    []byte
+				clean func()
+			)
+			if test.precomputed != nil {
+				clean = test.precomputed()
+			}
+			if test.withWrongDataType != nil {
+				by, _ = json.Marshal(test.withWrongDataType)
+			} else {
+				by, _ = json.Marshal(test.tokenList)
+			}
+			b = bytes.NewReader(by)
+
+			req, _ := http.NewRequest("POST", "/ban", b)
+			req.Header.Set("content-type", "application/json")
+			resp, err := app.Test(req, 1000*60)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode)
+
+			var info requests.BanInfo
+			by, _ = ioutil.ReadAll(resp.Body)
+			t.Log(string(by))
+			_ = json.Unmarshal(by, &info)
+			assert.Equal(t, test.expectedBans, info.Count)
+
+			if clean != nil {
+				clean()
+			}
+		})
+	}
+}
+
+func TestUnban_Mock(t *testing.T) {
+	tables := users.NewAuthTables(mockSession{}, userstore.NewUserRepo(mockConn{}))
+
+	handler := server.Ban(tables)
+
+	app := fiber.New()
+	app.Post("/ban", handler)
+
+	var tt = []struct {
+		name              string
+		tokenList         requests.TokenList
+		withWrongDataType interface{}
+		expectedCode      int
+		expectedDeletions int
+	}{
+		{
+			name: "should unban user and refresh tokens",
+			tokenList: requests.TokenList{
+				UserId: 123,
+				Tokens: []string{"321", "123", "444"},
+			},
+			expectedCode:      200,
+			expectedDeletions: 5,
+		},
+		{
+			name:              "should return error if incorrect datatype",
+			withWrongDataType: []int{123, 123, 123},
+			expectedCode:      400,
+		},
+		{
+			name: "should unban all user sessions",
+			tokenList: requests.TokenList{
+				UserId: 123,
+			},
+			expectedCode:      200,
+			expectedDeletions: 2,
+		},
+		{
+			name: "should unban given refresh tokens",
+			tokenList: requests.TokenList{
+				Tokens: []string{"123"},
+			},
+			expectedCode:      200,
+			expectedDeletions: 1,
+		},
+	}
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			var (
+				b  io.Reader
+				by []byte
+			)
+			if test.withWrongDataType != nil {
+				by, _ = json.Marshal(test.withWrongDataType)
+			} else {
+				by, _ = json.Marshal(test.tokenList)
+			}
+			b = bytes.NewBuffer(by)
+
+			req, _ := http.NewRequest("POST", "/ban", b)
+			req.Header.Set("content-type", "application/json")
+			resp, err := app.Test(req, 1000*60)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode)
+
+			var info requests.BanInfo
+			by, _ = ioutil.ReadAll(resp.Body)
+			_ = json.Unmarshal(by, &info)
+			assert.Equal(t, test.expectedDeletions, info.Count)
+		})
+	}
+}
+
+func TestUnban(t *testing.T) {
+	cfg := config.New("../config/dev.yml")
+	cfg.Database.Schema = "../config/schema.sql"
+	conn, cleaner := testhelpers.RealDb(cfg.Database)
+	defer cleaner("users", "refresh_sessions")
+
+	ctx := context.Background()
+
+	userRepo := userstore.NewUserRepo(conn)
+	u := entities.User{
+		Company: "123",
+	}
+	_ = u.GenerateSecrets()
+	user, err := userRepo.Create(context.Background(), u)
+	assert.NoError(t, err)
+
+	redisConn, redisCleaner := testhelpers.RedisDb(cfg.Database.Redis)
+	defer redisCleaner()
+	blacklist := blacklist.New(redisConn)
+
+	sessionRepo := sessions.New(tokens.New(conn), blacklist)
+	col := users.NewAuthTables(sessionRepo, userRepo)
+
+	handler := server.Unban(col)
+
+	var tt = []struct {
+		name              string
+		tokenList         requests.TokenList
+		withWrongDataType interface{}
+		expectedCode      int
+		expectedDeletions int
+		// Like before each and after each
+		precomputed func() func()
+	}{
+		{
+			name: "should unban user and refresh tokens",
+			tokenList: requests.TokenList{
+				UserId: user.ID,
+				Tokens: []string{"000"},
+			},
+			expectedCode:      200,
+			expectedDeletions: 4,
+			precomputed: func() func() {
+				l := []string{"321", "123", "444"}
+				for _, token := range l {
+					s, _ := sessionRepo.New(ctx, entities.Session{UserId: user.ID, RefreshToken: token})
+					assert.NoError(t, sessionRepo.Add(context.Background(), s.RefreshToken, s.ID, time.Hour))
+				}
+				_ = sessionRepo.Add(context.Background(), "000", 2, time.Hour)
+
+				return func() {
+					cleaner("refresh_sessions")
+					redisCleaner()
+				}
+			},
+		},
+		{
+			name:              "should return error if incorrect datatype",
+			withWrongDataType: []int{123, 123, 123},
+			expectedCode:      400,
+		},
+		{
+			name: "should unban all user sessions",
+			tokenList: requests.TokenList{
+				UserId: user.ID,
+			},
+			expectedCode:      200,
+			expectedDeletions: 3,
+			precomputed: func() func() {
+				l := []string{"321", "123", "444"}
+				for _, token := range l {
+					s, _ := sessionRepo.New(ctx, entities.Session{UserId: user.ID, RefreshToken: token})
+					assert.NoError(t, sessionRepo.Add(context.Background(), s.RefreshToken, s.ID, time.Hour))
+				}
+
+				return func() {
+					cleaner("refresh_sessions")
+					redisCleaner()
+				}
+			},
+		},
+		{
+			name: "should unban given refresh tokens",
+			tokenList: requests.TokenList{
+				Tokens: []string{"123"},
+			},
+			expectedCode:      200,
+			expectedDeletions: 1,
+			precomputed: func() func() {
+				l := []string{"123"}
+				for _, token := range l {
+					s, _ := sessionRepo.New(ctx, entities.Session{UserId: user.ID, RefreshToken: token})
+					assert.NoError(t, sessionRepo.Add(context.Background(), s.RefreshToken, s.ID, time.Hour))
+				}
+
+				return func() {
+					cleaner("refresh_sessions")
+					redisCleaner()
+				}
+			},
+		},
+	}
+
+	app := fiber.New()
+	app.Post("/ban", handler)
+
+	for _, test := range tt {
+		t.Run(test.name, func(t *testing.T) {
+			var (
+				b     io.Reader
+				by    []byte
+				clean func()
+			)
+			if test.precomputed != nil {
+				clean = test.precomputed()
+			}
+			if test.withWrongDataType != nil {
+				by, _ = json.Marshal(test.withWrongDataType)
+			} else {
+				by, _ = json.Marshal(test.tokenList)
+			}
+			b = bytes.NewReader(by)
+
+			req, _ := http.NewRequest("POST", "/ban", b)
+			req.Header.Set("content-type", "application/json")
+			resp, err := app.Test(req, 1000*60)
+			assert.NoError(t, err)
+			assert.Equal(t, test.expectedCode, resp.StatusCode)
+
+			var info requests.BanInfo
+			by, _ = ioutil.ReadAll(resp.Body)
+			t.Log(string(by))
+			_ = json.Unmarshal(by, &info)
+			assert.Equal(t, test.expectedDeletions, info.Count)
+
+			if clean != nil {
+				clean()
+			}
+		})
+	}
 }
