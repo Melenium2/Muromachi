@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Default success mock for session interface
 type mockSession struct {
 }
 
@@ -70,6 +71,7 @@ func (m mockSession) UserSessions(ctx context.Context, userId int) ([]entities.S
 	}, nil
 }
 
+// Error mock of session interface. Generate error in Remove method
 type mockSessionRemoveNoRows struct {
 }
 
@@ -105,6 +107,7 @@ func (m mockSessionRemoveNoRows) UserSessions(ctx context.Context, userId int) (
 	return nil, nil
 }
 
+// Error mock of session interface. Generate expired session in Remove method
 type mockSessionRemoveExpiredSession struct {
 }
 
@@ -142,6 +145,7 @@ func (m mockSessionRemoveExpiredSession) UserSessions(ctx context.Context, userI
 	return nil, nil
 }
 
+// Error mock of session interface. Generate multiply user sessions
 type mockSessionMoreThen5 struct {
 }
 
@@ -182,6 +186,7 @@ func (m mockSessionMoreThen5) UserSessions(ctx context.Context, userId int) ([]e
 	return sessions, nil
 }
 
+// Error mock of session interface. Generate banned session in Remove method
 type mockSessionBannedToken struct {
 
 }

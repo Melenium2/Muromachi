@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Defender is interface for session management
 type Defender interface {
 	StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error)
 	IsSessionBanned(ctx context.Context, refreshToken string) bool

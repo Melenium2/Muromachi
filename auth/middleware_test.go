@@ -17,6 +17,7 @@ import (
 func TestApplyAuthMiddleware_Mock(t *testing.T) {
 	app := fiber.New()
 
+	// Mock config for authorization processing
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetkonichiua",
 		JwtExpires: time.Hour * 1,
@@ -24,6 +25,7 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 		JwtAud:     "",
 	}
 	defender := auth.NewSecurity(cfg, mockSession{})
+	// Set up fiber app endpoints
 	app.Use("/", auth.ApplyAuthMiddleware(defender))
 	app.Get("/test", func(ctx *fiber.Ctx) error {
 		s, _ := mockSession{}.Get(ctx.Context(), "123")
@@ -73,11 +75,14 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
+			// Expire date
 			localTime := time.Now().Add(cfg.JwtExpires)
 			if test.withExpiredJwt {
 				localTime = localTime.Add(time.Hour * -24)
 			}
+			// Mock refresh token
 			rtoken := utils.Hash("123", "123")
+			// Generate jwt token
 			jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, &auth.Claims{
 				StandardClaims: &jwt.StandardClaims{
 					Audience:  cfg.JwtAud,
@@ -94,6 +99,7 @@ func TestApplyAuthMiddleware_Mock(t *testing.T) {
 			token, err := jwtToken.SignedString([]byte(cfg.JwtSalt))
 			assert.NoError(t, err)
 
+			// If not valid token add trash to jwt
 			if test.withNotValidJwt {
 				token += "123"
 			}

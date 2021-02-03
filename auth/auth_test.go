@@ -20,6 +20,7 @@ import (
 )
 
 func TestSecurity_StartSession_Mock(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetsalt",
 		JwtExpires: time.Hour * 24,
@@ -77,9 +78,11 @@ func TestSecurity_StartSession_Mock(t *testing.T) {
 		},
 	}
 
+	// test table
 	for _, test := range tt {
 		t.Run(test.name, func(t *testing.T) {
 			security := auth.NewSecurity(cfg, test.session)
+			// acquire new context
 			app := fiber.New()
 			fastCtx := &fasthttp.RequestCtx{}
 			ctx := app.AcquireCtx(fastCtx)
@@ -100,16 +103,20 @@ func TestSecurity_StartSession_Mock(t *testing.T) {
 }
 
 func TestSecurity_StartSession_ShouldCreateNewRefreshSession(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetsalt",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
+	// Change paths to db and schema
 	dbcfg := config.New("../config/dev.yml").Database
 	dbcfg.Schema = "../config/schema.sql"
+	// Create conn to real db
 	conn, cleaner := testhelpers.RealDb(dbcfg)
 	defer cleaner("refresh_sessions", "users")
 
+	// Prepare db for tests
 	sess := tokens.New(conn)
 	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
@@ -142,16 +149,20 @@ func TestSecurity_StartSession_ShouldCreateNewRefreshSession(t *testing.T) {
 }
 
 func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionNotFound(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetsalt",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
+	// Change paths to db and schema
 	dbcfg := config.New("../config/dev.yml").Database
 	dbcfg.Schema = "../config/schema.sql"
+	// Create conn to real db
 	conn, cleaner := testhelpers.RealDb(dbcfg)
 	defer cleaner("refresh_sessions")
 
+	// Prepare db for tests
 	sess := tokens.New(conn)
 	security := auth.NewSecurity(cfg, sessions.New(sess, nil))
 
@@ -174,16 +185,20 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionNotFound(t *test
 }
 
 func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionIsExpired(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetsalt",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
+	// Change paths to db and schema
 	dbcfg := config.New("../config/dev.yml").Database
 	dbcfg.Schema = "../config/schema.sql"
+	// Create conn to real db
 	conn, cleaner := testhelpers.RealDb(dbcfg)
 	defer cleaner("refresh_sessions", "users")
 
+	// Prepare
 	u := entities.User{
 		Company: "123",
 	}
@@ -220,16 +235,20 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshSessionIsExpired(t *tes
 }
 
 func TestSecurity_StartSession_ShouldReturnErrorIfSessionInBlackList(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetsalt",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
+	// Change paths to db and schema
 	dbcfg := config.New("../config/dev.yml")
 	dbcfg.Database.Schema = "../config/schema.sql"
+	// Create conn to real db
 	conn, cleaner := testhelpers.RealDb(dbcfg.Database)
 	defer cleaner("refresh_sessions", "users")
 
+	// Pepare db
 	u := entities.User{
 		Company: "123",
 	}
@@ -245,9 +264,11 @@ func TestSecurity_StartSession_ShouldReturnErrorIfSessionInBlackList(t *testing.
 		ExpiresIn:    time.Now().Add(time.Hour * 24),
 	})
 
+	// Connect to redis
 	redisConn, redisCleaner := testhelpers.RedisDb(dbcfg.Database.Redis)
 	defer redisCleaner()
 
+	// Prepare redis
 	balcklist := blacklist.New(redisConn)
 	assert.NoError(t, balcklist.Add(context.Background(), "123", 1, time.Hour))
 
@@ -278,16 +299,20 @@ func TestSecurity_StartSession_ShouldReturnErrorIfRefreshTokenNotProvidedAndCont
 }
 
 func TestSecurity_StartSession_ShouldRemoveAllUserSessionsIfLenIsMoreThen5AndReturnNewToken(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "hiprivetsalt",
 		JwtExpires: time.Hour * 24,
 		JwtIss:     "apptwice.com",
 	}
+	// Change paths to db and schema
 	dbcfg := config.New("../config/dev.yml").Database
 	dbcfg.Schema = "../config/schema.sql"
+	// Create conn to real db
 	conn, cleaner := testhelpers.RealDb(dbcfg)
 	defer cleaner("refresh_sessions", "users")
 
+	// Prepare db
 	u := entities.User{
 		Company: "123",
 	}
@@ -334,6 +359,7 @@ func TestSecurity_StartSession_ShouldRemoveAllUserSessionsIfLenIsMoreThen5AndRet
 }
 
 func TestSecurity_SignAccessToken(t *testing.T) {
+	// Mock config for authorization process
 	cfg := config.Authorization{
 		JwtSalt:    "uuuuuuuuuuuuuuuuuuthen",
 		JwtExpires: time.Hour * 24,
@@ -361,6 +387,7 @@ func TestSecurity_SignAccessToken(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			security := auth.NewSecurity(cfg, nil)
 
+			// Acquire ctx
 			app := fiber.New()
 			fastCtx := &fasthttp.RequestCtx{}
 			ctx := app.AcquireCtx(fastCtx)
