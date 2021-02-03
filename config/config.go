@@ -7,37 +7,74 @@ import (
 	"time"
 )
 
+// Authorization config
 type Authorization struct {
-	JwtSalt    string        `yaml:"jwt_salt"`
+	// Jwt salt is randomly string which will be additional added to jwt token
+	JwtSalt string `yaml:"jwt_salt"`
+	// When jwt is expired
 	JwtExpires time.Duration `yaml:"jwt_expires"`
-	JwtIss     string        `yaml:"jwt_iss"`
-	JwtAud     string        `yaml:"jwt_aud"`
+	// Who created jwt token
+	JwtIss string `yaml:"jwt_iss"`
+	// Who can use the token
+	//
+	// by default everyone can use the token
+	JwtAud string `yaml:"jwt_aud"`
 }
 
 //Database config
 type DBConfig struct {
-	Database string      `yaml:"name"`
-	User     string      `yaml:"user"`
-	Password string      `yaml:"password"`
-	Address  string      `yaml:"address"`
-	Port     string      `yaml:"port"`
-	Schema   string      `yaml:"schema"`
-	Redis    RedisConfig `yaml:"redis"`
+	// Database name
+	Database string `yaml:"name"`
+	// Postgres user
+	//
+	// for example: postgres
+	User string `yaml:"user"`
+	// Postgres password
+	//
+	// for example: (nothing :) )
+	Password string `yaml:"password"`
+	// Postgres machine hostname
+	//
+	// for example: localhost, mysite.com
+	Address string `yaml:"address"`
+	// Port on which postgres
+	//
+	// for example: 5432
+	Port string `yaml:"port"`
+	// The path to the file from which the database schema will be generated
+	Schema string `yaml:"schema"`
+	// Instance of redis config
+	Redis RedisConfig `yaml:"redis"`
 }
 
 // Redis cache config
 type RedisConfig struct {
+	// Redis machine hostname
+	//
+	// for example: localhost, mysite.com
 	Address  string `yaml:"address"`
+	// Port on which redis
+	//
+	// for example 6379
 	Port     string `yaml:"port"`
+	// Password to redis
+	//
+	// by default: (empty)
 	Password string `yaml:"password"`
+	// Database name
+	//
+	// by default: 0
 	Database int    `yaml:"database"`
 }
 
 // Config struct of application config
 type Config struct {
+	// Database configs
 	Database DBConfig      `yaml:"database"`
+	// Auth config
 	Auth     Authorization `yaml:"auth"`
 
+	// Sys envs
 	Envs []string `yaml:",flow"`
 }
 
