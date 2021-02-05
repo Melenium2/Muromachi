@@ -83,7 +83,7 @@ func TestAuthorize_Mock(t *testing.T) {
 				ClientId:     "1234",
 				ClientSecret: "123",
 			},
-			expectedCode: 404,
+			expectedCode: 403,
 		},
 		{
 			name:          "request with wrong user client secret, should return 401 error",
@@ -183,7 +183,7 @@ func TestAuthorize_WithWrongRequestDataType(t *testing.T) {
 	resp, err := app.Test(req, 1000*60)
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, 404, resp.StatusCode)
+	assert.Equal(t, 400, resp.StatusCode)
 
 	by, _ = ioutil.ReadAll(resp.Body)
 	t.Log(string(by))
@@ -282,7 +282,7 @@ func TestAuthorize(t *testing.T) {
 				ClientId:     clientId + "123123123",
 				ClientSecret: clientSecret,
 			},
-			expectedCode: 404,
+			expectedCode: 403,
 		},
 		{
 			name: "should return error if client secret not valid",
@@ -300,7 +300,7 @@ func TestAuthorize(t *testing.T) {
 				ClientId:     clientId,
 				ClientSecret: clientSecret,
 			},
-			expectedCode: 404,
+			expectedCode: 400,
 		},
 		{
 			name:        "should return error if refresh token in blacklist",
