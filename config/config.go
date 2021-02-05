@@ -4,6 +4,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -121,6 +122,47 @@ func New(p ...string) Config {
 	if ok && v != "" {
 		config.Database.Address = v
 	}
+	v, ok = envs["db_port"]
+	if ok && v != "" {
+		config.Database.Port = v
+	}
+	v, ok = envs["r_address"]
+	if ok && v != "" {
+		config.Database.Redis.Address = v
+	}
+	v, ok = envs["r_port"]
+	if ok && v != "" {
+		config.Database.Redis.Port = v
+	}
+	v, ok = envs["r_pass"]
+	if ok && v != "" {
+		config.Database.Redis.Password = v
+	}
+	v, ok = envs["r_database"]
+	if ok && v != "" {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			panic(err)
+		}
+		config.Database.Redis.Database = i
+	}
+	v, ok = envs["jwt_salt"]
+	if ok && v != "" {
+		config.Auth.JwtSalt = v
+	}
+	v, ok = envs["jwt_exp"]
+	if ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			panic(err)
+		}
+		config.Auth.JwtExpires = d
+	}
+	v, ok = envs["jwt_iss"]
+	if ok && v != "" {
+		config.Auth.JwtIss = v
+	}
+
 
 	return config
 }

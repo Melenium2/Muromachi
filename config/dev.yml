@@ -14,3 +14,4 @@ auth:
   jwt_salt: 375a8391bc788d49ab05f8dd909be1b7
   jwt_expires: 24h
   jwt_iss: apptwice.com
+envs: [db_user, db_pass, db_address, db_port, r_address, r_port, r_pass, r_database, jwt_salt, jwt_exp, jwt_iss]

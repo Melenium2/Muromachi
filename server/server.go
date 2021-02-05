@@ -8,6 +8,7 @@ import (
 	tracking2 "Muromachi/store/tracking"
 	"Muromachi/store/users"
 	"Muromachi/store/users/sessions"
+	"Muromachi/store/users/sessions/blacklist"
 	"Muromachi/store/users/sessions/tokens"
 	"Muromachi/store/users/userstore"
 	"Muromachi/utils"
@@ -68,11 +69,12 @@ func New(port string, config config.Config) *Server {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Init redis
+	redisConn := connector.EstablishRedisConnection(config.Database.Redis)
 	// Pointer to table collection
 	tables := tracking2.NewTrackingTables(conn)
-	// TODO прокинуть black list и редис коннект
 	// Interface of sessions
-	session := sessions.New(tokens.New(conn), nil)
+	session := sessions.New(tokens.New(conn), blacklist.New(redisConn))
 
 	server := &Server{
 		app:    fiber.New(),
