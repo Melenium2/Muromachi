@@ -4,6 +4,7 @@ import (
 	"Muromachi/config"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"io/ioutil"
@@ -80,9 +81,9 @@ func EstablishPostgresConnection(config config.DBConfig) (*pgxpool.Pool, error) 
 
 	conn, err := Connect(url)
 	if err != nil {
+
 		return nil, err
 	}
-
 	err = InitSchema(conn, config.Schema)
 	if err != nil {
 		conn.Close()
@@ -93,7 +94,11 @@ func EstablishPostgresConnection(config config.DBConfig) (*pgxpool.Pool, error) 
 }
 
 // Conn to redis
-func EstablishRedisConnection(config config.RedisConfig) (*redis.Client, error) {
-	// TODO Сделать коннектор для редиса
-	return nil, nil
+func EstablishRedisConnection(cfg config.RedisConfig) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:               fmt.Sprintf("%s:%s", cfg.Address, cfg.Port),
+		Password:           cfg.Password,
+	})
+
+	return client
 }
