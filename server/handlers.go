@@ -46,15 +46,15 @@ func Authorize(sec auth.Defender, sessions *users.Tables) func(*fiber.Ctx) error
 		)
 		// parse body as JWTRequest
 		if err := ctx.BodyParser(&request); err != nil {
-			return httpresp.Error(ctx, 404, err.Error())
+			return httpresp.Error(ctx, 400, err.Error())
 		}
 		if request.ClientId == "" || request.ClientSecret == "" {
-			return httpresp.Error(ctx, 404, fmt.Errorf("%s", "client id or client secret not provided"))
+			return httpresp.Error(ctx, 400, fmt.Errorf("%s", "client id or client secret not provided"))
 		}
 		// CheckAndDel if user with this client id and secret exists
 		user, err := sessions.Users.Approve(ctx.Context(), request.ClientId)
 		if err != nil {
-			return httpresp.Error(ctx, 404, err.Error())
+			return httpresp.Error(ctx, 403, err.Error())
 		}
 		if err = user.CompareSecret(request.ClientSecret); err != nil {
 			return httpresp.Error(ctx, 401, auth.ErrNotAuthenticated)
@@ -82,13 +82,13 @@ func Authorize(sec auth.Defender, sessions *users.Tables) func(*fiber.Ctx) error
 				return httpresp.Error(ctx, 400, err)
 			}
 		default:
-			return httpresp.Error(ctx, 404, "need to provide access type for request")
+			return httpresp.Error(ctx, 400, "need to provide access type for request")
 		}
 
 		// Create jwt object
 		accesstoken, err := sec.SignAccessToken(ctx, refreshToken)
 		if err != nil {
-			return httpresp.Error(ctx, 400, err.Error())
+			return httpresp.Error(ctx, 500, err.Error())
 		}
 
 		// return json depending of the type of Access type
@@ -102,7 +102,7 @@ func NewCompany(sessions *users.Tables) func(*fiber.Ctx) error {
 		var err error
 		company := ctx.Query("c")
 		if company == "" {
-			return httpresp.Error(ctx, 404, "empty company query")
+			return httpresp.Error(ctx, 400, "empty company query")
 		}
 
 		user := entities.User{
@@ -110,11 +110,11 @@ func NewCompany(sessions *users.Tables) func(*fiber.Ctx) error {
 		}
 		err = user.GenerateSecrets()
 		if err != nil {
-			return httpresp.Error(ctx, 400, "can not generate secrets")
+			return httpresp.Error(ctx, 500, "can not generate secrets")
 		}
 		user, err = sessions.Users.Create(ctx.Context(), user)
 		if err != nil {
-			return httpresp.Error(ctx, 400, err)
+			return httpresp.Error(ctx, 500, err)
 		}
 
 		return ctx.JSON(user)
