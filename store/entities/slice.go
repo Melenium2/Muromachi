@@ -5,8 +5,10 @@ import (
 	"fmt"
 )
 
+// Type for slice of DBO interface obj
 type DboSlice []DBO
 
+// Converts slice of DBO to different types of slices
 func (d DboSlice) To(to interface{}) error {
 	switch v := to.(type) {
 	case []*model.App:

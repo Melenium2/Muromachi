@@ -71,6 +71,7 @@ func InitSchema(connection *pgxpool.Pool, schemafile string) error {
 	return nil
 }
 
+// Conn to posgres db
 func EstablishPostgresConnection(config config.DBConfig) (*pgxpool.Pool, error) {
 	url, err := ConnectionUrl(config)
 	if err != nil {
@@ -91,6 +92,7 @@ func EstablishPostgresConnection(config config.DBConfig) (*pgxpool.Pool, error) 
 	return conn, nil
 }
 
+// Conn to redis
 func EstablishRedisConnection(config config.RedisConfig) (*redis.Client, error) {
 	// TODO Сделать коннектор для редиса
 	return nil, nil

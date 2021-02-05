@@ -8,10 +8,12 @@ import (
 	"time"
 )
 
+// Struct for holds connection with db
 type KeysRepo struct {
 	Conn connector.Conn
 }
 
+// Making database queries
 func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var (
 		key  entities.Track
@@ -44,6 +46,7 @@ func (k *KeysRepo) ProducerFunc(ctx context.Context, sql string, params ...inter
 	return keys, nil
 }
 
+// Return DboSlice with entities.Track with bundleId which is equal to given id
 func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
@@ -52,6 +55,7 @@ func (k *KeysRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSl
 	)
 }
 
+// Return DboSlice with given bundle id and within time range from start to end
 func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,
@@ -60,6 +64,7 @@ func (k *KeysRepo) TimeRange(ctx context.Context, bundleId int, start, end time.
 	)
 }
 
+// Get last n updates of app with bundle id equals given bundle id
 func (k *KeysRepo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
 	return k.ProducerFunc(
 		ctx,

@@ -7,9 +7,13 @@ import (
 	"time"
 )
 
+// Interface for operating black list
 type BlackList interface {
+	// Add new session to black list
 	Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+	// Check if session already exists in black list
 	CheckIfExist(ctx context.Context, key string) error
+	// Remove session from black list
 	Del(ctx context.Context, keys ...string) (int64, error)
 }
 

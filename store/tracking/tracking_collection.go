@@ -4,6 +4,7 @@ import (
 	"Muromachi/store/connector"
 )
 
+// helper to working with different tables
 type Tables struct {
 	App  Repository
 	Meta Repository

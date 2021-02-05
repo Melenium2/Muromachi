@@ -8,7 +8,9 @@ import (
 )
 
 type UsersRepo interface {
+	// Create new user
 	Create(ctx context.Context, user entities.User) (entities.User, error)
+	// Check if user exists by clientId
 	Approve(ctx context.Context, clientId string) (entities.User, error)
 }
 
@@ -46,7 +48,7 @@ func (u *UserRepo) Create(ctx context.Context, user entities.User) (entities.Use
 	return user, nil
 }
 
-// Search for a userrepo by clientId and get it
+// Search for a user by clientId and get it
 func (u *UserRepo) Approve(ctx context.Context, clientId string) (entities.User, error) {
 	row := u.conn.QueryRow(
 		ctx,

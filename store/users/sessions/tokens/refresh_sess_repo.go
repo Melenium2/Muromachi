@@ -9,11 +9,17 @@ import (
 	"time"
 )
 
+// Interface for operating user sessions
 type RefreshSession interface {
+	// Save new session
 	New(ctx context.Context, session entities.Session) (entities.Session, error)
+	// Get session by refresh token
 	Get(ctx context.Context, token string) (entities.Session, error)
+	// Remove session with same refresh token
 	Remove(ctx context.Context, token string) (entities.Session, error)
+	// Remove some sessions
 	RemoveBatch(ctx context.Context, sessionid ...int) error
+	// Get user sessions
 	UserSessions(ctx context.Context, userId int) ([]entities.Session, error)
 }
 

@@ -5,6 +5,7 @@ import (
 	"Muromachi/store/users/userstore"
 )
 
+// helper to working with different tables
 type Tables struct {
 	Sessions sessions.Session
 	Users    userstore.UsersRepo

@@ -9,10 +9,12 @@ import (
 	"time"
 )
 
+// Struct for holds connection with db
 type Repo struct {
 	Conn connector.Conn
 }
 
+// Making database queries
 func (a *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var app entities.App
 	var apps []entities.DBO
@@ -40,6 +42,7 @@ func (a *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface
 	return apps, nil
 }
 
+// Return DboSlice with entities.App with bundleId which is equal to given id
 func (a *Repo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return a.ProducerFunc(
 		ctx,
@@ -48,6 +51,7 @@ func (a *Repo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice,
 	)
 }
 
+// Return DboSlice with given bundle id and within time range from start to end
 func (a *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return a.ProducerFunc(
 		ctx,
@@ -56,6 +60,7 @@ func (a *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time
 	)
 }
 
+// Do nothing here
 func (a *Repo) LastUpdates(_ context.Context, _, _ int) (entities.DboSlice, error) {
 	return nil, fmt.Errorf("%s", "no last updates in this table")
 }

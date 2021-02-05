@@ -8,10 +8,12 @@ import (
 	"time"
 )
 
+// Struct for holds connection with db
 type Repo struct {
 	Conn connector.Conn
 }
 
+// Making database queries
 func (m *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var (
 		meta entities.Meta
@@ -48,6 +50,7 @@ func (m *Repo) ProducerFunc(ctx context.Context, sql string, params ...interface
 	return apps, nil
 }
 
+// Return DboSlice with entities.Meta with bundleId which is equal to given id
 func (m *Repo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return m.ProducerFunc(
 		ctx,
@@ -56,6 +59,7 @@ func (m *Repo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice,
 	)
 }
 
+// Return DboSlice with given bundle id and within time range from start to end
 func (m *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return m.ProducerFunc(
 		ctx,
@@ -64,6 +68,7 @@ func (m *Repo) TimeRange(ctx context.Context, bundleId int, start, end time.Time
 	)
 }
 
+// Get last n updates of app with bundle id equals given bundle id
 func (m *Repo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
 	return m.ProducerFunc(
 		ctx,

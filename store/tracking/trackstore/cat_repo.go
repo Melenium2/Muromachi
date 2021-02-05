@@ -8,10 +8,12 @@ import (
 	"time"
 )
 
+// Struct for holds connection with db
 type CatRepo struct {
 	Conn connector.Conn
 }
 
+// Making database queries
 func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error) {
 	var key entities.Track
 	var app entities.App
@@ -42,6 +44,7 @@ func (c *CatRepo) ProducerFunc(ctx context.Context, sql string, params ...interf
 	return keys, nil
 }
 
+// Return DboSlice with entities.Track with bundleId which is equal to given id
 func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
@@ -50,6 +53,7 @@ func (c *CatRepo) ByBundleId(ctx context.Context, bundleId int) (entities.DboSli
 	)
 }
 
+// Return DboSlice with given bundle id and within time range from start to end
 func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,
@@ -58,6 +62,7 @@ func (c *CatRepo) TimeRange(ctx context.Context, bundleId int, start, end time.T
 	)
 }
 
+// Get last n updates of categories with bundle id equals given bundle id
 func (c *CatRepo) LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error) {
 	return c.ProducerFunc(
 		ctx,

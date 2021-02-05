@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Representation of app in db
 type App struct {
 	Id          int       `json:"-"`
 	Bundle      string    `json:"bundle,omitempty"`
@@ -17,6 +18,7 @@ type App struct {
 	Period      uint32    `json:"period,omitempty"`
 }
 
+// Converts DBO to *App or *model.App
 func (a App) To(to interface{}) error {
 	switch v := to.(type) {
 	case *App:

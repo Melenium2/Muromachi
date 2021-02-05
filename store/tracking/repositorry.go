@@ -11,9 +11,13 @@ import (
 )
 
 type Repository interface {
+	// Func for making queries to db
 	ProducerFunc(ctx context.Context, sql string, params ...interface{}) (entities.DboSlice, error)
+	// Get entities.DboSlice by bundle id
 	ByBundleId(ctx context.Context, bundleId int) (entities.DboSlice, error)
+	// Get entities.DboSlice by bundle id and time range from start to end
 	TimeRange(ctx context.Context, bundleId int, start, end time.Time) (entities.DboSlice, error)
+	// Get last updates of DBO
 	LastUpdates(ctx context.Context, bundleId, count int) (entities.DboSlice, error)
 }
 
