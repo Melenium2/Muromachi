@@ -6,15 +6,18 @@ import (
 	"time"
 )
 
+// Categories and Keywords representation in db
+// Then have same fields
 type Track struct {
 	Id       int       `json:"-"`
 	BundleId int       `json:"bundle,omitempty"`
 	Type     string    `json:"type,omitempty"`
 	Date     time.Time `json:"date,omitempty"`
 	Place    int32     `json:"place,omitempty"`
-	App      App       `json:"apprepo,omitempty"`
+	App      App       `json:"app,omitempty"`
 }
 
+// Converts DBO to *Track or *model.Categories or *model.Keywords
 func (tr Track) To(to interface{}) error {
 	switch v := to.(type) {
 	case *Track:

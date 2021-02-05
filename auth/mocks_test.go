@@ -8,7 +8,12 @@ import (
 	"time"
 )
 
+// Default success mock for session interface
 type mockSession struct {
+}
+
+func (m mockSession) Del(ctx context.Context, keys ...string) (int64, error) {
+	return 0, nil
 }
 
 func (m mockSession) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
@@ -66,7 +71,12 @@ func (m mockSession) UserSessions(ctx context.Context, userId int) ([]entities.S
 	}, nil
 }
 
+// Error mock of session interface. Generate error in Remove method
 type mockSessionRemoveNoRows struct {
+}
+
+func (m mockSessionRemoveNoRows) Del(ctx context.Context, keys ...string) (int64, error) {
+	return 0, nil
 }
 
 func (m mockSessionRemoveNoRows) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
@@ -97,7 +107,12 @@ func (m mockSessionRemoveNoRows) UserSessions(ctx context.Context, userId int) (
 	return nil, nil
 }
 
+// Error mock of session interface. Generate expired session in Remove method
 type mockSessionRemoveExpiredSession struct {
+}
+
+func (m mockSessionRemoveExpiredSession) Del(ctx context.Context, keys ...string) (int64, error) {
+	return 0, nil
 }
 
 func (m mockSessionRemoveExpiredSession) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
@@ -130,7 +145,12 @@ func (m mockSessionRemoveExpiredSession) UserSessions(ctx context.Context, userI
 	return nil, nil
 }
 
+// Error mock of session interface. Generate multiply user sessions
 type mockSessionMoreThen5 struct {
+}
+
+func (m mockSessionMoreThen5) Del(ctx context.Context, keys ...string) (int64, error) {
+	return 0, nil
 }
 
 func (m mockSessionMoreThen5) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
@@ -166,8 +186,13 @@ func (m mockSessionMoreThen5) UserSessions(ctx context.Context, userId int) ([]e
 	return sessions, nil
 }
 
+// Error mock of session interface. Generate banned session in Remove method
 type mockSessionBannedToken struct {
 
+}
+
+func (m mockSessionBannedToken) Del(ctx context.Context, keys ...string) (int64, error) {
+	return 0, nil
 }
 
 func (m mockSessionBannedToken) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {

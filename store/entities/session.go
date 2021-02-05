@@ -2,6 +2,7 @@ package entities
 
 import "time"
 
+// Session representation in db
 type Session struct {
 	ID           int       `json:"id,omitempty"`
 	UserId       int       `json:"user_id,omitempty"`

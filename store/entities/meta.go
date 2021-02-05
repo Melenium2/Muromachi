@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Meta information representation in db
 type Meta struct {
 	Id                int               `json:"-"`
 	BundleId          int               `json:"-"`
@@ -30,9 +31,10 @@ type Meta struct {
 	DeveloperContacts DeveloperContacts `json:"developerContacts" db:"developer_contacts"`
 	PrivacyPolicy     string            `json:"privacyPolicy,omitempty"`
 	Date              time.Time         `json:"date,omitempty"`
-	App               App               `json:"apprepo,omitempty"`
+	App               App               `json:"app,omitempty"`
 }
 
+// Convert DBo to *Meta or *model.Meta
 func (m Meta) To(to interface{}) error {
 	switch v := to.(type) {
 	case *Meta:
@@ -73,11 +75,13 @@ func (m Meta) To(to interface{}) error {
 	return nil
 }
 
+// Developer contacts struct
 type DeveloperContacts struct {
 	Email    string `json:"email,omitempty"`
 	Contacts string `json:"contacts,omitempty"`
 }
 
+// Decode to binary representation
 func (dest *DeveloperContacts) DecodeBinary(ci *pgtype.ConnInfo, src []byte) error {
 	if src == nil {
 		return fmt.Errorf("NULL values can't be decoded. Scan into a &*DeveloperContacts to handle NULLs")
@@ -90,6 +94,7 @@ func (dest *DeveloperContacts) DecodeBinary(ci *pgtype.ConnInfo, src []byte) err
 	return nil
 }
 
+// Encode to email and contacts
 func (src DeveloperContacts) EncodeBinary(ci *pgtype.ConnInfo, buf []byte) (newBuf []byte, err error) {
 	email := pgtype.Text{String: src.Email, Status: pgtype.Present}
 	contacts := pgtype.Text{String: src.Contacts, Status: pgtype.Present}

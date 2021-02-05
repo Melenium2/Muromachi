@@ -11,6 +11,10 @@ import (
 type mockSession struct {
 }
 
+func (m mockSession) Del(ctx context.Context, keys ...string) (int64, error) {
+	return int64(len(keys)), nil
+}
+
 func (m mockSession) Add(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
 	return nil
 }
@@ -39,11 +43,29 @@ func (m mockSession) RemoveBatch(ctx context.Context, sessionid ...int) error {
 }
 
 func (m mockSession) UserSessions(ctx context.Context, userId int) ([]entities.Session, error) {
-	return nil, nil
+	return []entities.Session{
+		{
+			ID:           1,
+			UserId:       1,
+			RefreshToken: "000",
+			UserAgent:    "",
+			Ip:           "",
+			ExpiresIn:    time.Time{},
+			CreatedAt:    time.Time{},
+		},
+		{
+			ID:           2,
+			UserId:       2,
+			RefreshToken: "999",
+			UserAgent:    "",
+			Ip:           "",
+			ExpiresIn:    time.Time{},
+			CreatedAt:    time.Time{},
+		},
+	}, nil
 }
 
 type mockConn struct {
-
 }
 
 func (m mockConn) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
@@ -107,5 +129,3 @@ type mockRowError struct {
 func (m mockRowError) Scan(dest ...interface{}) error {
 	return pgx.ErrNoRows
 }
-
-

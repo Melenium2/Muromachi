@@ -160,6 +160,7 @@ func TrackStruct(bundleId int, t string) entities.Track {
 	}
 }
 
+// Conn to real database
 func RedisDb(c ...config.RedisConfig) (*redis.Client, func()) {
 	var cfg config.RedisConfig
 	if len(c) > 0 {

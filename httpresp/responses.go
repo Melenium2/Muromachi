@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Push error to context for response
 func Error(ctx *fiber.Ctx, status int, resp interface{}) error {
 	ctx.Status(status)
 	switch v := resp.(type) {

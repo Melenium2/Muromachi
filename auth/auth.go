@@ -3,7 +3,7 @@ package auth
 import (
 	"Muromachi/config"
 	"Muromachi/store/entities"
-	"Muromachi/store/sessions"
+	"Muromachi/store/users/sessions"
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
@@ -12,26 +12,24 @@ import (
 )
 
 var (
+	// Cookie key
 	SecurityCookieName = "apptwice-access-token"
 
+	// Standard authentication error
 	ErrNotAuthenticated = map[string]interface{}{
 		"status": 401,
 		"error":  "invalid auth token, please login with you credentials",
 	}
 )
 
-type Defender interface {
-	StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error)
-	IsSessionBanned(ctx context.Context, refreshToken string) bool
-	BanSessions(ctx context.Context, tokens ...entities.Session) error
-	SignAccessToken(ctx *fiber.Ctx, refreshToken string) (JWTResponse, error)
-	ValidateJwt(accessToken string) (*Claims, error)
-}
-
 type Security struct {
+	// Config for authorization
 	config    config.Authorization
+	// Generator is pointer to jwt utils
 	generator *securityGenerator
-	sessions  sessions.Sessions
+	// Sessions interface which allows manipulate with user refresh
+	// sessions and blacklist
+	sessions  sessions.Session
 }
 
 func (security *Security) ApplyRequestIdMiddleware(c *fiber.Ctx) error {
@@ -41,7 +39,7 @@ func (security *Security) ApplyRequestIdMiddleware(c *fiber.Ctx) error {
 
 // Creating new refresh session in DB and return new refresh token for user
 //
-// TODO Возможно стоит сравнивать user-agent или дополнительные парамтры для ваидации
+// TODO It might be worth comparing the user agent or additional parameters to validate the session
 func (security *Security) StartSession(ctx *fiber.Ctx, refreshToken ...string) (string, error) {
 	var (
 		token  string
@@ -158,14 +156,7 @@ func (security *Security) SignAccessToken(ctx *fiber.Ctx, refreshToken string) (
 	return jwt, nil
 }
 
+// Validate given jwt. Return return if token not valid
 func (security *Security) ValidateJwt(token string) (*Claims, error) {
 	return security.generator.ValidateJwt(token)
-}
-
-func NewSecurity(config config.Authorization, sessions sessions.Sessions) *Security {
-	return &Security{
-		config:    config,
-		generator: newSecurityGen(config),
-		sessions:  sessions,
-	}
 }
