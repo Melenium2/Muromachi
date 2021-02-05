@@ -14,7 +14,9 @@ import (
 	"Muromachi/utils"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"log"
+	"time"
 )
 
 type Server struct {
@@ -36,10 +38,17 @@ type Server struct {
 
 // Init routes and apply middleware
 func (s *Server) initRoutes() {
+
 	//Graphql playground
 	s.app.All("/playground", Testground())
 	// GraphQL Group
 	ql := s.app.Group("/ql", auth.ApplyAuthMiddleware(s.security))
+	// Request limiter
+	ql.Use(limiter.New(limiter.Config{
+		Max: 20,
+		Expiration: time.Minute * 1,
+	}))
+
 	ql.All("/query", Graphql(s.resolver))
 
 	// Rest
